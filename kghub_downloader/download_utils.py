@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 import elasticsearch.helpers
 import elasticsearch
@@ -58,9 +59,13 @@ def download_from_yaml(yaml_file: str, output_dir: str,
                 download_from_api(item, outfile)
             else:
                 req = Request(item['url'], headers={'User-Agent': 'Mozilla/5.0'})
-                with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
-                    data = response.read()  # a `bytes` object
-                    out_file.write(data)
+                try:
+                    with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
+                        data = response.read()  # a `bytes` object
+                        out_file.write(data)
+                except URLError:
+                    logging.error(f"Failed to download: {item['url']}")
+                    raise
 
     return None
 
