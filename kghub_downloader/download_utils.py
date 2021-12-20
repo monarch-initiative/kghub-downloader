@@ -7,6 +7,7 @@ import elasticsearch
 import compress_json  # type: ignore
 import yaml
 from os import path
+import pathlib
 
 from compress_json import compress_json
 from tqdm.auto import tqdm  # type: ignore
@@ -25,7 +26,7 @@ def download_from_yaml(yaml_file: str, output_dir: str,
         None.
     """
 
-    os.makedirs(output_dir, exist_ok=True)
+    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     with open(yaml_file) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
         for item in tqdm(data, desc="Downloading files"):
@@ -43,7 +44,7 @@ def download_from_yaml(yaml_file: str, output_dir: str,
             local_file_dir = path.join(output_dir, path.dirname(item['local_name']))
             if not path.exists(local_file_dir):
                 logging.info(f"Creating local directory {local_file_dir}")
-                os.mkdir(local_file_dir)
+                pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
 
             if path.exists(outfile):
                 if ignore_cache:
