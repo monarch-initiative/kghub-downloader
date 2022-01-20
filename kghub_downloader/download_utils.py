@@ -1,18 +1,20 @@
 import json
 import logging
 import os
+import pathlib
+from os import path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
-import elasticsearch.helpers
-import elasticsearch
-import compress_json  # type: ignore
-import yaml
-from os import path
-import pathlib
 
+import compress_json  # type: ignore
+import elasticsearch
+import elasticsearch.helpers
+import yaml
 from compress_json import compress_json
 from tqdm.auto import tqdm  # type: ignore
-
+from google.cloud import storage
+from google.cloud.storage.blob import Blob
+from urllib.parse import urlparse
 
 def download_from_yaml(yaml_file: str, output_dir: str,
                        ignore_cache: bool = False) -> None:
@@ -42,10 +44,11 @@ def download_from_yaml(yaml_file: str, output_dir: str,
             )
             logging.info("Retrieving %s from %s" % (outfile, item['url']))
 
-            local_file_dir = path.join(output_dir, path.dirname(item['local_name']))
-            if not path.exists(local_file_dir):
-                logging.info(f"Creating local directory {local_file_dir}")
-                pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
+            if 'local_name' in item:
+                local_file_dir = path.join(output_dir, path.dirname(item['local_name']))
+                if not path.exists(local_file_dir):
+                    logging.info(f"Creating local directory {local_file_dir}")
+                    pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
 
             if path.exists(outfile):
                 if ignore_cache:
@@ -57,6 +60,8 @@ def download_from_yaml(yaml_file: str, output_dir: str,
 
             if 'api' in item:
                 download_from_api(item, outfile)
+            if 'url' in item and item['url'].startswith("gs://"):
+                Blob.from_string(item['url'], client=storage.Client()).download_to_filename(outfile)
             else:
                 req = Request(item['url'], headers={'User-Agent': 'Mozilla/5.0'})
                 try:

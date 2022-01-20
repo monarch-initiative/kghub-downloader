@@ -1,0 +1,13 @@
+---
+-
+  url: https://zfin.org/downloads/phenoGeneCleanData_fish.txt
+  local_name: fish_phenotype.txt
+-
+  api: elasticsearch
+  url: https://www.ebi.ac.uk/chembl/elk/es/
+  query_file: example/query.json
+  local_name: molecule.json
+  index: chembl_28_molecule
+-
+  url: gs://monarch-ingest/merged_graph_stats.yaml
+
