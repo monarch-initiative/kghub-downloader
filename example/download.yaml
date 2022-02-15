@@ -10,4 +10,5 @@
   index: chembl_28_molecule
 -
   url: gs://monarch-ingest/merged_graph_stats.yaml
+  tag: graph_stats
 
