@@ -35,12 +35,12 @@ def download_from_yaml(yaml_file: str,
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     with open(yaml_file) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        for item in tqdm(data, desc="Downloading files"):
-            if tags:
-                if "tag" not in item or not item["tag"] or item["tag"] not in tags:
-                    logging.info("Skipping {} ".format(item))
-                    continue
 
+        # Limit to only tagged downloads, if tags are passed in
+        if tags:
+            data = [item for item in data if "tag" in item and item["tag"] and item["tag"] in tags]
+
+        for item in tqdm(data, desc="Downloading files"):
             if 'url' not in item:
                 logging.error("Couldn't find url for source in {}".format(item))
                 continue
