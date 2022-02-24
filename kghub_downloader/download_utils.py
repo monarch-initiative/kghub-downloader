@@ -14,12 +14,13 @@ from compress_json import compress_json
 from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
-from typing import List
+from typing import List, Optional
 
 
-def download_from_yaml(yaml_file: str, output_dir: str,
-                       ignore_cache: bool = False,
-                       tags: List = None) -> None:
+def download_from_yaml(yaml_file: str,
+                       output_dir: str,
+                       ignore_cache: Optional[bool] = False,
+                       tags: Optional[List] = None) -> None:
     """Given an download info from an download.yaml file, download all files
 
     Args:
@@ -37,11 +38,11 @@ def download_from_yaml(yaml_file: str, output_dir: str,
         for item in tqdm(data, desc="Downloading files"):
             if tags:
                 if "tag" not in item or not item["tag"] or item["tag"] not in tags:
-                    logging.warning("Skipping {} ".format(item))
+                    logging.info("Skipping {} ".format(item))
                     continue
 
             if 'url' not in item:
-                logging.warning("Couldn't find url for source in {}".format(item))
+                logging.error("Couldn't find url for source in {}".format(item))
                 continue
             outfile = os.path.join(
                 output_dir,
