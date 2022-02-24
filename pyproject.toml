@@ -1,8 +1,11 @@
 [tool.poetry]
 name = "kghub-downloader"
-version = "0.1.7"
+version = "0.1.8"
 description = "Downloads and caches files for knowledge graph ETL"
 authors = ["The Monarch Initiative <info@monarchinitiative.org>"]
+
+[tool.poetry.scripts]
+downloader = "kghub_downloader.main:typer_app"
 
 [tool.poetry.dependencies]
 python = "^3.7"
