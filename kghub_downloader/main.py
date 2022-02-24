@@ -1,7 +1,7 @@
 from typing import Optional, List
 
 import typer
-from download_utils import download_from_yaml
+from kghub_downloader.download_utils import download_from_yaml
 
 typer_app = typer.Typer()
 
