@@ -40,6 +40,8 @@ Command Line:
 ```
 downloader --output_dir example_output --tags zfin_gene_to_phenotype example.yaml
 ```
+Note: If your YAML file is named `download.yaml`, the argument can be omitted from the CLI call.  
+For example, `downloader --output_dir example_output` is equivalent to `downloader --output_dir example_output download.yaml`
 
 **Parameters:**  
 - `yaml_file`: List of files to download in YAML format. Defaults to "download.yaml"  
@@ -47,5 +49,3 @@ downloader --output_dir example_output --tags zfin_gene_to_phenotype example.yam
 - `ignore_cache`: Optional boolean; if True ignores already downloaded files and download again. Defaults to False  
 - `tags`: Optional list of tags, limits downloads to those with matching tags
 
-Note: If your YAML file is named `download.yaml`, the argument can be omitted from the CLI call.  
-For example, `downloader --output_dir example_output` is equivalent to `downloader --output_dir example_output download.yaml`
