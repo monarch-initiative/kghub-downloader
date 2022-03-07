@@ -20,6 +20,7 @@ from typing import List, Optional
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
                        ignore_cache: Optional[bool] = False,
+                       snippet_only=False,
                        tags: Optional[List] = None) -> None:
     """Given an download info from an download.yaml file, download all files
 
@@ -27,6 +28,7 @@ def download_from_yaml(yaml_file: str,
         yaml_file: A string pointing to the download.yaml file, to be parsed for things to download.
         output_dir: A string pointing to where to write out downloaded files.
         ignore_cache: Ignore cache and download files even if they exist [false]
+        snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
         tags: Limit to only downloads with this tag
     Returns:
         None.
@@ -43,6 +45,9 @@ def download_from_yaml(yaml_file: str,
         for item in tqdm(data, desc="Downloading files"):
             if 'url' not in item:
                 logging.error("Couldn't find url for source in {}".format(item))
+                continue
+            if snippet_only and (item['local_name'])[-3:] in ["zip",".gz"]: # Can't truncate compressed files
+                logging.error("Asked to download snippets; can't snippet {}".format(item))
                 continue
             outfile = os.path.join(
                 output_dir,
@@ -74,8 +79,21 @@ def download_from_yaml(yaml_file: str,
                 req = Request(item['url'], headers={'User-Agent': 'Mozilla/5.0'})
                 try:
                     with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
-                        data = response.read()  # a `bytes` object
+                        if snippet_only:
+                            data = response.read(5120)  # first 5 kB of a `bytes` object
+                        else:
+                            data = response.read()  # a `bytes` object
                         out_file.write(data)
+                        if snippet_only: #Need to clean up the outfile
+                            in_file = open(outfile, 'r+')
+                            in_lines = in_file.read()
+                            in_file.close()
+                            splitlines=in_lines.split("\n")
+                            outstring="\n".join(splitlines[:-1])
+                            cleanfile = open(outfile,'w+')
+                            for i in range(len(outstring)):
+                                cleanfile.write(outstring[i])
+                            cleanfile.close()
                 except URLError:
                     logging.error(f"Failed to download: {item['url']}")
                     raise
