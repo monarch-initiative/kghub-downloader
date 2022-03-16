@@ -104,11 +104,13 @@ def download_from_yaml(yaml_file: str,
             
             # If mirror, upload to remote storage
             if mirror:
-                with open(outfile, 'rb'):
+                with open(outfile, 'rb') as fn:
                     if mirror.startswith("gs://"):
                         #bashCommand = f"gsutil cp {outfile} {mirror}"
                         storage_client = storage.Client()
                         
+                        #mirror = "gs://monarch-initiative/put/stuff/here"
+
                         bucket_split = mirror.split("/")
                         bucket_base = "/".join(bucket_split[0:3])
                         bucket_path = "/".join(bucket_split[3:])
@@ -117,8 +119,10 @@ def download_from_yaml(yaml_file: str,
 
                         bucket = storage_client.bucket(bucket_base)
                         blob = bucket.blob(f"{bucket_path}/{outfile}")
+                        logging.info(f"blob bucket: {blob.bucket}")
+
                         logging.info(f"Uploading {outfile} to remote mirror: {bucket_base}/{bucket_path}")
-                        blob.upload_from_filename(outfile)                     
+                        blob.upload_from_file(fn)
 
                     elif mirror.startswith("s3://"):
                         bashCommand = f"aws s3 cp {outfile} {mirror}"
