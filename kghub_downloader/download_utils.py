@@ -112,8 +112,8 @@ def download_from_yaml(yaml_file: str,
                         #mirror = "gs://monarch-initiative/put/stuff/here"
 
                         bucket_split = mirror.split("/")
-                        bucket_base = "/".join(bucket_split[0:3])
-                        bucket_path = "/".join(bucket_split[3:])
+                        bucket_base = "/".join(bucket_split[0:2])
+                        bucket_path = "/".join(bucket_split[2:])
                         logging.info(f"Bucket Base URL: {bucket_base}")
                         logging.info(f"Bucket filepath: {bucket_path}")
 
