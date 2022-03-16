@@ -15,13 +15,15 @@ from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
-
+import subprocess 
 
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
                        ignore_cache: Optional[bool] = False,
                        snippet_only=False,
-                       tags: Optional[List] = None) -> None:
+                       tags: Optional[List] = None,
+                       mirror: Optional[str] = None
+                       ) -> None:
     """Given an download info from an download.yaml file, download all files
 
     Args:
@@ -30,6 +32,7 @@ def download_from_yaml(yaml_file: str,
         ignore_cache: Ignore cache and download files even if they exist [false]
         snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
         tags: Limit to only downloads with this tag
+        mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage, Amazon S3
     Returns:
         None.
     """
@@ -70,7 +73,8 @@ def download_from_yaml(yaml_file: str,
                 else:
                     logging.info("Using cached version of {}".format(outfile))
                     continue
-
+            
+            # Download file
             if 'api' in item:
                 download_from_api(item, outfile)
             if 'url' in item and item['url'].startswith("gs://"):
@@ -97,6 +101,28 @@ def download_from_yaml(yaml_file: str,
                 except URLError:
                     logging.error(f"Failed to download: {item['url']}")
                     raise
+            
+            # If mirror, upload to remote storage
+            if mirror:
+                with open(outfile, 'rb'):
+                    if mirror.startswith("gs://"):
+                        #bashCommand = f"gsutil cp {outfile} {mirror}"
+                        storage_client = storage.Client()
+                        
+                        bucket_split = mirror.split("/")
+                        bucket_base = "/".join(bucket_split[0:3])
+                        bucket_path = "/".join(bucket_split[3:])
+                        logging.info(f"Bucket Base URL: {bucket_base}")
+                        logging.info(f"Bucket filepath: {bucket_path}")
+
+                        bucket = storage_client.bucket(bucket_base)
+                        blob = bucket.blob(f"{bucket_path}/{outfile}")
+                        logging.info(f"Uploading {outfile} to remote mirror: {bucket_base}/{bucket_path}")
+                        blob.upload_from_filename(outfile)                     
+
+                    elif mirror.startswith("s3://"):
+                        bashCommand = f"aws s3 cp {outfile} {mirror}"
+                        subprocess.run(bashCommand.split())
 
     return None
 
