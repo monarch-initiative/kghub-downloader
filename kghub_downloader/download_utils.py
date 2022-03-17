@@ -104,29 +104,27 @@ def download_from_yaml(yaml_file: str,
             
             # If mirror, upload to remote storage
             if mirror:
-                with open(outfile, 'rb') as fn:
+                with open(outfile, 'rb'):
                     if mirror.startswith("gs://"):
-                        #bashCommand = f"gsutil cp {outfile} {mirror}"
                         storage_client = storage.Client()
                         
-                        #mirror = "gs://monarch-initiative/put/stuff/here"
-
+                        fn = outfile.split("/")[-1]
                         bucket_split = mirror.split("/")
-                        bucket_base = "/".join(bucket_split[0:2])
-                        bucket_path = "/".join(bucket_split[2:])
-                        logging.info(f"Bucket Base URL: {bucket_base}")
-                        logging.info(f"Bucket filepath: {bucket_path}")
+                        bucket_name = bucket_split[2]
+                        blob_path = "/".join(bucket_split[3:])
+                        print(f"Bucket name: {bucket_name}")
+                        print(f"Bucket filepath: {blob_path}")
 
-                        bucket = storage_client.bucket(bucket_base)
-                        blob = bucket.blob(f"{bucket_path}/{outfile}")
-                        logging.info(f"blob bucket: {blob.bucket}")
-
-                        logging.info(f"Uploading {outfile} to remote mirror: {bucket_base}/{bucket_path}")
-                        blob.upload_from_file(fn)
+                        bucket = storage_client.bucket(bucket_name)
+                        blob = bucket.blob(f"{blob_path}/{fn}")
+                        
+                        print(f"Uploading {outfile} to remote mirror: gs://{bucket_name}/{blob_path}/")
+                        blob.upload_from_filename(outfile)
 
                     elif mirror.startswith("s3://"):
-                        bashCommand = f"aws s3 cp {outfile} {mirror}"
-                        subprocess.run(bashCommand.split())
+                        pass
+                        #bashCommand = f"aws s3 cp {outfile} {mirror}"
+                        #subprocess.run(bashCommand.split())
 
     return None
 
