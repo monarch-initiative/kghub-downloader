@@ -12,6 +12,6 @@ from kghub_downloader.download_utils import *
 def test_mirror():
     mirror_to_bucket(
                local_file='resources/testfile.txt',
-               bucket_url='gs://test-monarch-output',
+               bucket_url='gs://test-monarch-output/',
                remote_file='test/test.txt'
           )

@@ -114,8 +114,12 @@ def download_from_yaml(yaml_file: str,
 def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
     with open(local_file, 'rb'):
         if bucket_url.startswith("gs://"):
+            
+            # Remove any trailing slashes (Google gets confused)
+            bucket_url = bucket_url.rstrip("/")
+            
             # Connect to GCS Bucket
-            storage_client = storage.Client() 
+            storage_client = storage.Client()
             bucket_split = bucket_url.split("/")
             bucket_name = bucket_split[2]
             bucket = storage_client.bucket(bucket_name)
