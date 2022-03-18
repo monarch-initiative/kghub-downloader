@@ -48,5 +48,5 @@ For example, `downloader --output_dir example_output` is equivalent to `download
 - `output_dir`: Path to output directory. Defaults to current directory  
 - `ignore_cache`: Optional boolean; if True ignores already downloaded files and download again. Defaults to False  
 - `tags`: Optional list of tags, limits downloads to those with matching tags
-- `mirror`: Optional URL path to remote storage to backup download. Currently supports: Google Cloud Storage, Amazon S3
-  - Note: use full directory path (ex. `--mirror gs://your-bucket/desired/directory`)
+- `mirror`: Optional URL path to remote storage to backup download. Currently supports: Google Cloud Storage
+  - Note: use full path to desired directory (ex. `--mirror gs://your-bucket/desired/directory`)

@@ -12,7 +12,7 @@ def main(
          output_dir: Optional[str] = typer.Option(".", help="Path to output directory"),
          ignore_cache: Optional[bool] = typer.Option(False, help="Ignoring already downloaded files and download again"),
          tag: Optional[List[str]] = typer.Option(None, help="Optional list of tags to limit downloading to"),
-         mirror: Optional[str] = typer.Option(None, help="Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage, Amazon S3")
+         mirror: Optional[str] = typer.Option(None, help="Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage")
          ):
     download_from_yaml(yaml_file, output_dir, ignore_cache, tag, mirror)
 
