@@ -1,17 +1,20 @@
-"""
-TODO 
-- mock GCS calls, maybe fake datafile too? 
-"""
 from sys import path as syspath
-from os import path as ospath
-
 syspath.append("/home/glass/dev/tislab/kghub-downloader")
 from kghub_downloader.download_utils import *
 
+from unittest import mock
+
 # proper test
-def test_mirror():
+@mock.patch("google.cloud.storage.Client")
+def test_mirror(client):
     mirror_to_bucket(
                local_file='resources/testfile.txt',
                bucket_url='gs://test-monarch-output/',
                remote_file='test/test.txt'
           )
+
+    bucket = client().bucket
+    bucket.assert_called_with("test-monarch-output")
+
+    blob = bucket().blob
+    blob.assert_called_with("test/test.txt")
