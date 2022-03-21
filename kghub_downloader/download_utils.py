@@ -1,5 +1,6 @@
 import json
 import logging
+from multiprocessing.sharedctypes import Value
 import os
 import pathlib
 from os import path
@@ -15,13 +16,15 @@ from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
-
+import subprocess 
 
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
                        ignore_cache: Optional[bool] = False,
                        snippet_only=False,
-                       tags: Optional[List] = None) -> None:
+                       tags: Optional[List] = None,
+                       mirror: Optional[str] = None
+                       ) -> None:
     """Given an download info from an download.yaml file, download all files
 
     Args:
@@ -30,6 +33,7 @@ def download_from_yaml(yaml_file: str,
         ignore_cache: Ignore cache and download files even if they exist [false]
         snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
         tags: Limit to only downloads with this tag
+        mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
     Returns:
         None.
     """
@@ -49,12 +53,10 @@ def download_from_yaml(yaml_file: str,
             if snippet_only and (item['local_name'])[-3:] in ["zip",".gz"]: # Can't truncate compressed files
                 logging.error("Asked to download snippets; can't snippet {}".format(item))
                 continue
-            outfile = os.path.join(
-                output_dir,
-                item['local_name']
-                if 'local_name' in item
-                else item['url'].split("/")[-1]
-            )
+
+            local_name = item['local_name'] if 'local_name' in item and item['local_name'] else item['url'].split("/")[-1]
+            outfile = os.path.join(output_dir, local_name)
+
             logging.info("Retrieving %s from %s" % (outfile, item['url']))
 
             if 'local_name' in item:
@@ -70,7 +72,8 @@ def download_from_yaml(yaml_file: str,
                 else:
                     logging.info("Using cached version of {}".format(outfile))
                     continue
-
+            
+            # Download file
             if 'api' in item:
                 download_from_api(item, outfile)
             if 'url' in item and item['url'].startswith("gs://"):
@@ -97,9 +100,54 @@ def download_from_yaml(yaml_file: str,
                 except URLError:
                     logging.error(f"Failed to download: {item['url']}")
                     raise
+            
+            # If mirror, upload to remote storage
+            if mirror:
+                mirror_to_bucket(local_file=outfile, 
+                                 bucket_url=mirror,
+                                 remote_file=local_name
+                            )
+
 
     return None
 
+def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
+    with open(local_file, 'rb'):
+        if bucket_url.startswith("gs://"):
+            
+            # Remove any trailing slashes (Google gets confused)
+            bucket_url = bucket_url.rstrip("/")
+            
+            # Connect to GCS Bucket
+            storage_client = storage.Client()
+            bucket_split = bucket_url.split("/")
+            bucket_name = bucket_split[2]
+            bucket = storage_client.bucket(bucket_name)
+
+            # Upload blob from local file
+            if len(bucket_split) > 3:
+                bucket_path = "/".join(bucket_split[3:])
+            else:
+                bucket_path = None
+
+            print(f"Bucket name: {bucket_name}")
+            print(f"Bucket filepath: {bucket_path}")
+            
+            blob = bucket.blob(f"{bucket_path}/{remote_file}") if bucket_path else bucket.blob(remote_file)
+
+            print(f"Uploading {local_file} to remote mirror: gs://{blob.name}/")
+            blob.upload_from_filename(local_file)
+        
+        
+        elif bucket_url.startswith("s3://"):
+            raise ValueError("Currently, only Google Cloud storage is supported.")
+            #bashCommand = f"aws s3 cp {outfile} {mirror}"
+            #subprocess.run(bashCommand.split())
+
+        else:
+            raise ValueError("Currently, only Google Cloud storage is supported.")
+
+    return None
 
 def download_from_api(yaml_item, outfile) -> None:
     """
