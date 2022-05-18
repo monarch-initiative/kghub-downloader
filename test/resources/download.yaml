@@ -2,6 +2,6 @@
 -
   url: https://zfin.org/downloads/phenoGeneCleanData_fish.txt
   local_name: zfin/fish_phenotype.txt
--
-  url: gs://monarch-ingest/merged_graph_stats.yaml
-  tag: graph_stats
+# -
+#   url: gs://monarch-ingest/merged_graph_stats.yaml
+#   tag: graph_stats
