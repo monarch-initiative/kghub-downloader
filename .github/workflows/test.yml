@@ -1,5 +1,5 @@
 # Builds and runs pytest on ubuntu-latest
-# Tests python versions >=3.6
+# Tests python versions >=3.8
 name: CI
 
 on:
@@ -13,7 +13,7 @@ on:
 jobs:
   # https://github.com/actions/setup-python
   test-python3-ubuntu-latest:
-    name: test py${{ matrix.python-version }} on linux
+    name: Test py${{ matrix.python-version }} on Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,14 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: set up python
+      - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: build
+      - name: Install Poetry
         run: pip install poetry
+
+      - name: Install dependencies
         run: poetry install
 
-      - name: test
+      - name: Run tests
         run: pytest
