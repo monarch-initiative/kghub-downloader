@@ -9,3 +9,47 @@ nav:
 
 theme:
     name: 'material'
+
+
+site_name: 'KG-Hub Downloader'
+site_url: 'https://monarch-initiative.github.io/kghub-downloader'
+
+repo_name: 'monarch-initiative/kghub-downloader'
+repo_url: 'https://github.com/monarch-initiative/kghub-downloader'
+
+theme:
+    name: 'material'
+    docs_dir: docs/
+    features:
+        - navigation.expand
+        - navigation.instant
+        - navigation.tracking
+        - navigation.tabs
+        - navigation.tabs.sticky
+    palette:
+        scheme: 'slate'
+        primary: 'teal'
+        accent: 'purple'
+    font:
+        text: 'Roboto'
+        #code: 'Fira Mono'
+
+extra:
+  social:
+    - icon: 'fontawesome/solid/house'
+      link: 'https://monarchinitiative.org'
+    - icon: 'fontawesome/brands/github-alt'
+      link: 'https://github.com/monarch-initiative'
+
+markdown_extensions:
+  - def_list # list support
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.keys
+  - attr_list
+  - pymdownx.betterem:
+      smart_enable: all
+      
+#copyright: 'Copyright &copy; 2020 - 2022 Glass (contact@glass-ships.com)'
