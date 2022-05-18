@@ -1,5 +1,3 @@
-from sys import path as syspath
-syspath.append("/home/glass/dev/tislab/kghub-downloader")
 from kghub_downloader.download_utils import *
 
 from unittest import mock
@@ -8,7 +6,7 @@ from unittest import mock
 @mock.patch("google.cloud.storage.Client")
 def test_mirror(client):
     mirror_to_bucket(
-               local_file='resources/testfile.txt',
+               local_file='test/resources/testfile.txt',
                bucket_url='gs://test-monarch-output/',
                remote_file='test/test.txt'
           )

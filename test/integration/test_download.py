@@ -5,13 +5,13 @@ import os
 
 # Integration test using example configuration
 def test_download():
-    files = ["output/fish_phenotype.txt", "output/molecule.json", "output/merged_graph_stats.yaml"]
+    files = ["test/output/zfin/fish_phenotype.txt", "test/output/merged_graph_stats.yaml"]
 
     for file in files:
         if exists(file):
             os.remove(file)
 
-    download_from_yaml(yaml_file="example/download.yaml", output_dir="output")
+    download_from_yaml(yaml_file="test/resources/download.yaml", output_dir="test/output")
 
     for file in files:
         assert exists(file)
@@ -19,15 +19,15 @@ def test_download():
 
 
 def test_tag():
-    files = ["output/fish_phenotype.txt", "output/molecule.json", "output/merged_graph_stats.yaml"]
-    tagged_files = ["output/merged_graph_stats.yaml"]
+    files = ["test/output/fish_phenotype.txt", "test/output/molecule.json", "test/output/merged_graph_stats.yaml"]
+    tagged_files = ["test/output/merged_graph_stats.yaml"]
 
     for file in files:
         if exists(file):
             os.remove(file)
 
-    download_from_yaml(yaml_file="example/download.yaml",
-                       output_dir="output",
+    download_from_yaml(yaml_file="test/resources/download.yaml",
+                       output_dir="test/output",
                        tags=['graph_stats'])
 
     for file in tagged_files:

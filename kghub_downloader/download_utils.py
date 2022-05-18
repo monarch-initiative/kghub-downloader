@@ -1,22 +1,24 @@
-import json
+import os, pathlib, re
 import logging
+
+import json, yaml
+import compress_json  # type: ignore
+#from compress_json import compress_json
+
 from multiprocessing.sharedctypes import Value
-import os
-import pathlib
-from os import path
+
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-import compress_json  # type: ignore
+
 import elasticsearch
 import elasticsearch.helpers
-import yaml
-from compress_json import compress_json
+
 from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
-import subprocess 
+
 
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
@@ -60,12 +62,12 @@ def download_from_yaml(yaml_file: str,
             logging.info("Retrieving %s from %s" % (outfile, item['url']))
 
             if 'local_name' in item:
-                local_file_dir = path.join(output_dir, path.dirname(item['local_name']))
-                if not path.exists(local_file_dir):
+                local_file_dir = os.path.join(output_dir, os.path.dirname(item['local_name']))
+                if not os.path.exists(local_file_dir):
                     logging.info(f"Creating local directory {local_file_dir}")
                     pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
 
-            if path.exists(outfile):
+            if os.path.exists(outfile):
                 if ignore_cache:
                     logging.info("Deleting cached version of {}".format(outfile))
                     os.remove(outfile)
@@ -76,30 +78,32 @@ def download_from_yaml(yaml_file: str,
             # Download file
             if 'api' in item:
                 download_from_api(item, outfile)
-            if 'url' in item and item['url'].startswith("gs://"):
-                Blob.from_string(item['url'], client=storage.Client()).download_to_filename(outfile)
-            else:
-                req = Request(item['url'], headers={'User-Agent': 'Mozilla/5.0'})
-                try:
-                    with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
-                        if snippet_only:
-                            data = response.read(5120)  # first 5 kB of a `bytes` object
-                        else:
-                            data = response.read()  # a `bytes` object
-                        out_file.write(data)
-                        if snippet_only: #Need to clean up the outfile
-                            in_file = open(outfile, 'r+')
-                            in_lines = in_file.read()
-                            in_file.close()
-                            splitlines=in_lines.split("\n")
-                            outstring="\n".join(splitlines[:-1])
-                            cleanfile = open(outfile,'w+')
-                            for i in range(len(outstring)):
-                                cleanfile.write(outstring[i])
-                            cleanfile.close()
-                except URLError:
-                    logging.error(f"Failed to download: {item['url']}")
-                    raise
+            if 'url' in item:
+                url = parse_url(item['url'])
+                if url.startswith("gs://"):
+                    Blob.from_string(url, client=storage.Client()).download_to_filename(outfile)
+                else:
+                    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                    try:
+                        with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
+                            if snippet_only:
+                                data = response.read(5120)  # first 5 kB of a `bytes` object
+                            else:
+                                data = response.read()  # a `bytes` object
+                            out_file.write(data)
+                            if snippet_only: #Need to clean up the outfile
+                                in_file = open(outfile, 'r+')
+                                in_lines = in_file.read()
+                                in_file.close()
+                                splitlines=in_lines.split("\n")
+                                outstring="\n".join(splitlines[:-1])
+                                cleanfile = open(outfile,'w+')
+                                for i in range(len(outstring)):
+                                    cleanfile.write(outstring[i])
+                                cleanfile.close()
+                    except URLError:
+                        logging.error(f"Failed to download: {url}")
+                        raise
             
             # If mirror, upload to remote storage
             if mirror:
@@ -169,7 +173,6 @@ def download_from_api(yaml_item, outfile) -> None:
     else:
         raise RuntimeError(f"API {yaml_item['api']} not supported")
 
-
 def elastic_search_query(es_connection,
                          index,
                          query,
@@ -201,3 +204,12 @@ def elastic_search_query(es_connection,
         records.append(item)
 
     return records
+
+def parse_url(url: str):
+    """Parses a URL for any environment variables enclosed in {curly braces}"""
+    pattern = ".*?\{(.*?)\}"
+    match = re.findall(pattern, url)
+    for i in match:
+        secret = os.getenv(i)
+        url = url.replace("{"+i+"}", secret)
+    return url
