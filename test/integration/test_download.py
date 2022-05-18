@@ -5,7 +5,7 @@ import os
 
 # Integration test using example configuration
 def test_download():
-    files = ["test/output/zfin/fish_phenotype.txt", "test/output/merged_graph_stats.yaml"]
+    files = ["test/output/zfin/fish_phenotype.txt"]#, "test/output/merged_graph_stats.yaml"]
 
     for file in files:
         if exists(file):
@@ -19,7 +19,7 @@ def test_download():
 
 
 def test_tag():
-    files = ["test/output/fish_phenotype.txt", "test/output/molecule.json", "test/output/merged_graph_stats.yaml"]
+    files = ["test/output/fish_phenotype.txt"]#, "test/output/merged_graph_stats.yaml"]
     tagged_files = ["test/output/merged_graph_stats.yaml"]
 
     for file in files:
