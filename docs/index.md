@@ -30,6 +30,15 @@ The format for the file is:
 
 ```
 
+You can also include any secrets like API keys you have set as environment variables using `{VARIABLE_NAME}`, for example:  
+```yaml
+---
+-
+  url: "https://example.com/myfancyfile.json?key={YOUR_SECRET}"
+  localname: myfancyfile.json
+```
+Note: You _MUST_ have this secret set as an environment variable, and be sure to include the {curly braces}
+
 ### Usage
 
 Downloader can be used directly in Python or via command line
