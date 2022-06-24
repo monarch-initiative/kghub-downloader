@@ -16,7 +16,7 @@ from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
-import subprocess 
+import subprocess
 
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
@@ -72,7 +72,7 @@ def download_from_yaml(yaml_file: str,
                 else:
                     logging.info("Using cached version of {}".format(outfile))
                     continue
-            
+            logging.info(f"Downloading {item['url']}")
             # Download file
             if 'api' in item:
                 download_from_api(item, outfile)
@@ -97,13 +97,13 @@ def download_from_yaml(yaml_file: str,
                             for i in range(len(outstring)):
                                 cleanfile.write(outstring[i])
                             cleanfile.close()
-                except URLError:
+                except Exception:
                     logging.error(f"Failed to download: {item['url']}")
                     raise
-            
+
             # If mirror, upload to remote storage
             if mirror:
-                mirror_to_bucket(local_file=outfile, 
+                mirror_to_bucket(local_file=outfile,
                                  bucket_url=mirror,
                                  remote_file=local_name
                             )
@@ -114,10 +114,10 @@ def download_from_yaml(yaml_file: str,
 def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
     with open(local_file, 'rb'):
         if bucket_url.startswith("gs://"):
-            
+
             # Remove any trailing slashes (Google gets confused)
             bucket_url = bucket_url.rstrip("/")
-            
+
             # Connect to GCS Bucket
             storage_client = storage.Client()
             bucket_split = bucket_url.split("/")
@@ -132,13 +132,13 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
 
             print(f"Bucket name: {bucket_name}")
             print(f"Bucket filepath: {bucket_path}")
-            
+
             blob = bucket.blob(f"{bucket_path}/{remote_file}") if bucket_path else bucket.blob(remote_file)
 
             print(f"Uploading {local_file} to remote mirror: gs://{blob.name}/")
             blob.upload_from_filename(local_file)
-        
-        
+
+
         elif bucket_url.startswith("s3://"):
             raise ValueError("Currently, only Google Cloud storage is supported.")
             #bashCommand = f"aws s3 cp {outfile} {mirror}"
