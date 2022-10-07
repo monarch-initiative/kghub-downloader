@@ -211,5 +211,7 @@ def parse_url(url: str):
     match = re.findall(pattern, url)
     for i in match:
         secret = os.getenv(i)
+        if secret is None:
+            raise ValueError(f"Environment Variable: {i} is not set. Please set the variable using export or similar, and try again.")
         url = url.replace("{"+i+"}", secret)
     return url
