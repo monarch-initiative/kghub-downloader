@@ -14,7 +14,11 @@ def main(
          tag: Optional[List[str]] = typer.Option(None, help="Optional list of tags to limit downloading to"),
          mirror: Optional[str] = typer.Option(None, help="Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage")
          ):
-    download_from_yaml(yaml_file, output_dir, ignore_cache, tag, mirror)
+    download_from_yaml(yaml_file=yaml_file,
+                       output_dir=output_dir,
+                       ignore_cache=ignore_cache,
+                       tags=tag,
+                       mirror=mirror)
 
 
 if __name__ == "__main__":
