@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kghub-downloader"
-version = "0.3.1"
+version = "0.3.2"
 description = "Downloads and caches files for knowledge graph ETL"
 authors = ["The Monarch Initiative <info@monarchinitiative.org>"]
 
