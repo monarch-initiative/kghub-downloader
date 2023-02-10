@@ -7,12 +7,12 @@ from unittest import mock
 def test_mirror(client):
     mirror_to_bucket(
                local_file='test/resources/testfile.txt',
-               bucket_url='gs://test-monarch-output/',
-               remote_file='test/test.txt'
+               bucket_url='gs://monarch-test/',
+               remote_file='kghub_test_upload.txt'
           )
 
     bucket = client().bucket
-    bucket.assert_called_with("test-monarch-output")
+    bucket.assert_called_with("monarch-test")
 
     blob = bucket().blob
-    blob.assert_called_with("test/test.txt")
+    blob.assert_called_with("kghub_test_upload.txt")
