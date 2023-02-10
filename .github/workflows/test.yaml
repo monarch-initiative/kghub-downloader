@@ -47,6 +47,13 @@ jobs:
 
       - name: Install 
         run: poetry install --no-interaction 
+
+      - name: Authenticate to Google Cloud
+        id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: projects/1032453560151/locations/global/workloadIdentityPools/monarch-github-actions/providers/monarch-github-wip
+          service_account: 'github-actions@monarch-initiative.iam.gserviceaccount.com'
         
       - name: Run tests
         run: |
