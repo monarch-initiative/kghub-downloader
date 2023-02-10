@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kghub-downloader"
-version = "0.3.3"
+version = "0.3.4"
 description = "Downloads and caches files for knowledge graph ETL"
 authors = ["The Monarch Initiative <info@monarchinitiative.org>"]
 
@@ -17,6 +17,7 @@ google-cloud-storage = "^2.1.0"
 typer = "^0.7.0"
 mkdocs = "^1.4.0"
 mkdocs-material = "^8.5.6"
+mkdocstrings = {extras = ["python"], version = "^0.20.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

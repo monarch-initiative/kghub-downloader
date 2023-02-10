@@ -43,7 +43,7 @@ Note: You _MUST_ have this secret set as an environment variable, and be sure to
 
 Downloader can be used directly in Python or via command line
 
-#### In Python:
+#### In Python
 
 ```python
 from kghub_downloader.download_utils import download_from_yaml
@@ -52,16 +52,31 @@ download_from_yaml(yaml_file="download.yaml", output_dir="data")
 ```
 
 #### Command Line
-```bash
-downloader --output_dir example_output --tags zfin_gene_to_phenotype example.yaml
-```
-Note: If your YAML file is named `download.yaml`, the argument can be omitted from the CLI call.  
-For example, `downloader --output_dir example_output` is equivalent to `downloader --output_dir example_output download.yaml`
 
-**Command Line Arguments:**  
-- `yaml_file`: List of files to download in YAML format. Defaults to "download.yaml"  
-- `output_dir`: Path to output directory. Defaults to current directory  
-- `ignore_cache`: Optional boolean; if True ignores already downloaded files and download again. Defaults to False  
-- `tags`: Optional list of tags, limits downloads to those with matching tags
-- `mirror`: Optional URL path to remote storage to backup download. Currently supports: Google Cloud Storage
-  - Note: use full path to desired directory (ex. `--mirror gs://your-bucket/desired/directory`)
+```bash
+$ downloader [OPTIONS] ARGS
+```
+╰ Download files listed in a download.yaml file
+
+| OPTIONS | | 
+| --- | --- |
+| yaml_file | A string pointing to the download.yaml file, to be parsed for things to download.<br>Defaults to `./download.yaml` |
+| ignore_cache | Ignore cache and download files even if they exist [false] |
+| snippet_only | Downloads only the first 5 kB of each uncompressed source, for testing and file checks |
+| tags | Limit to only downloads with this tag |
+| mirror | Remote storage URL to mirror download to. Supported buckets: Google Cloud Storage |
+
+
+| ARGUMENTS | | 
+| --- | --- |
+| output_dir | A string pointing to where to write out downloaded files. |
+
+Examples:
+```bash
+$ downloader --output_dir example_output --tags zfin_gene_to_phenotype example.yaml
+$ downloader --output_dir example_output --mirror gs://your-bucket/desired/directory
+
+# Note that if your YAML file is named `download.yaml`, 
+# the argument can be omitted from the CLI call.
+$ downloader --output_dir example_output
+```
