@@ -1,25 +1,17 @@
 site_name: 'KG-Hub Downloader'
-
 repo_name: 'monarch-initiative/kghub-downloader'
 repo_url: 'https://github.com/monarch-initiative/kghub-downloader'
-docs_dir: docs/
+
 
 nav: 
-    - Home: 'index.md'
+  - Home: 'index.md'
 
-theme:
-    name: 'material'
-
-
-site_name: 'KG-Hub Downloader'
-site_url: 'https://monarch-initiative.github.io/kghub-downloader'
-
-repo_name: 'monarch-initiative/kghub-downloader'
-repo_url: 'https://github.com/monarch-initiative/kghub-downloader'
 
 theme:
     name: 'material'
     docs_dir: docs/
+    logo: 'images/monarch-initiative.png'
+    favicon: 'images/favicon.ico'
     features:
         - navigation.expand
         - navigation.instant
@@ -27,29 +19,65 @@ theme:
         - navigation.tabs
         - navigation.tabs.sticky
     palette:
-        scheme: 'slate'
-        primary: 'teal'
-        accent: 'purple'
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-2
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
     font:
-        text: 'Roboto'
-        #code: 'Fira Mono'
+        text: 'Source Sans Pro'
+        code: 'Source Sans Pro Mono'
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          import:
+          - https://docs.python.org/3/objects.inv
+          - https://mkdocstrings.github.io/objects.inv
+          - https://mkdocstrings.github.io/griffe/objects.inv
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: True
+            merge_init_into_class: True
+            separate_signature: True
+            heading_level: 3
+            show_source: False
+            show_root_full_path: False
+            show_root_toc_entry: False
+
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - attr_list
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.tabbed:
+      alternate_style: true
+
 
 extra:
   social:
     - icon: 'fontawesome/solid/house'
       link: 'https://monarchinitiative.org'
     - icon: 'fontawesome/brands/github-alt'
-      link: 'https://github.com/monarch-initiative'
+      link: 'https://github.com/monarch-initiative/'
 
-markdown_extensions:
-  - def_list # list support
-  - admonition
-  - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.tabbed
-  - pymdownx.keys
-  - attr_list
-  - pymdownx.betterem:
-      smart_enable: all
-      
-#copyright: 'Copyright &copy; 2020 - 2022 Glass (contact@glass-ships.com)'

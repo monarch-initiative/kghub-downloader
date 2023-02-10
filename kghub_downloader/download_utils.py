@@ -23,11 +23,11 @@ from typing import List, Optional
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
                        ignore_cache: Optional[bool] = False,
-                       snippet_only=False,
+                       snippet_only: Optional[bool] = False,
                        tags: Optional[List] = None,
                        mirror: Optional[str] = None
                        ) -> None:
-    """Given an download info from an download.yaml file, download all files
+    """Download files listed in a download.yaml file
 
     Args:
         yaml_file: A string pointing to the download.yaml file, to be parsed for things to download.
@@ -207,7 +207,7 @@ def elastic_search_query(es_connection,
 
 def parse_url(url: str):
     """Parses a URL for any environment variables enclosed in {curly braces}"""
-    pattern = ".*?\{(.*?)\}"
+    pattern = r".*?\{(.*?)\}"
     match = re.findall(pattern, url)
     for i in match:
         secret = os.getenv(i)

@@ -3,11 +3,13 @@
   url: https://zfin.org/downloads/phenoGeneCleanData_fish.txt
   local_name: zfin/fish_phenotype.txt
 -
-  url: gs://monarch-ingest/merged_graph_stats.yaml
-  tag: graph_stats
--
-  api: elasticsearch
-  url: https://www.ebi.ac.uk/chembl/elk/es/
-  query_file: example/query.json
-  local_name: molecule.json
-  index: chembl_28_molecule
+  url: gs://monarch-test/kghub_downloader_test_file.yaml
+  local_name: test_file.yaml
+  tag: testing
+# -
+#   api: elasticsearch
+#   url: https://www.ebi.ac.uk/chembl/elk/es/
+#   query_file: example/query.json
+#   local_name: molecule.json
+#   index: chembl_28_molecule
+#   tag: ebi
