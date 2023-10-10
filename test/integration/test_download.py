@@ -5,7 +5,11 @@ import os
 
 # Integration test using example configuration
 def test_download():
-    files = ["test/output/zfin/fish_phenotype.txt", "test/output/test_file.yaml"]
+    files = [
+        "test/output/zfin/fish_phenotype.txt",
+        "test/output/test_file.yaml",
+        "test/output/gdrive_test.txt"
+        ]
 
     for file in files:
         if exists(file):
