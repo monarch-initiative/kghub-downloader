@@ -15,29 +15,35 @@ pip install kghub-downloader
 
 ### Configure 
 
-#### Download Configuration
+The downloader requires a YAML file which contains a list of target URLs to download, and local names to save those downloads.  
+For an example, see [example/download.yaml](example/download.yaml)
 
-The downloader requires a YAML file which contains a list of target URLs to download, and local names to save those downloads.
-The format for the file is:
-```yaml
----
-- 
-  url: "http://example.com/myawesomefile.tsv"
-  local_name: myawesomefile.tsv
--
-  url: "http://example.com/myokfile.json"
-  local_name: myokfile.json
+Available options are:
+- \***url**: The URL to download from. Currently supported:  
+  - `http(s)`
+  - Google Cloud Storage (`gs://`)
+  - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
+- **local_name**: The name to save the file as locally
+- **tag**: A tag to use to filter downloads
+- **api**: The API to use to download the file. Currently supported: `elasticsearch`
+- elastic search options  
+  - **query_file**: The file containing the query to run against the index
+  - **index**: The elastic search index for query
 
-```
+> \* Note:  
+>  Google Cloud Storage URLs require that you have set up your credentials as described [here](https://cloud.google.com/artifact-registry/docs/python/authentication#keyring-user). You must:  
+> - [create a service account](https://cloud.google.com/iam/docs/service-accounts-create)  
+> - [add the service account to the relevant bucket](https://cloud.google.com/storage/docs/access-control/using-iam-permissions#bucket-iam) and  
+> - [download a JSON key](https://cloud.google.com/iam/docs/keys-create-delete) for that service account.  
+>  Then, set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to that file.
 
 You can also include any secrets like API keys you have set as environment variables using `{VARIABLE_NAME}`, for example:  
 ```yaml
 ---
--
-  url: "https://example.com/myfancyfile.json?key={YOUR_SECRET}"
+- url: "https://example.com/myfancyfile.json?key={YOUR_SECRET}"
   localname: myfancyfile.json
 ```
-Note: You _MUST_ have this secret set as an environment variable, and be sure to include the {curly braces}
+Note: `YOUR_SECRET` *MUST* as an environment variable, and be sure to include the {curly braces} in the url string.
 
 ### Usage
 
@@ -80,3 +86,21 @@ $ downloader --output_dir example_output --mirror gs://your-bucket/desired/direc
 # the argument can be omitted from the CLI call.
 $ downloader --output_dir example_output
 ```
+
+### Development
+
+#### Install
+
+```bash
+git clone https://github.com/monarch-initiative/kghub-downloader.git
+cd kghub-downloader
+poetry install
+```
+
+#### Run tests
+
+```bash
+poetry run pytest
+```
+
+NOTE: The tests require gcloud credentials to be set up as described above, using the monarch github actions service account.
