@@ -16,3 +16,7 @@
 -
   url: gdrive:10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
   local_name: gdrive_test.txt
+
+-
+  url: https://drive.google.com/uc?id=10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
+  local_name: gdrive_test.txt
