@@ -6,11 +6,11 @@ import os
 # Integration test using example configuration
 def test_download():
     files = files = [
-         "test/output/zfin/fish_phenotype.txt",
-         "test/output/test_file.yaml",
-         "test/output/gdrive_test_1.txt",
-         "test/output/gdrive_test_2.txt",
-         ]
+        "test/output/zfin/fish_phenotype.txt",
+        "test/output/test_file.yaml",
+        "test/output/gdrive_test_1.txt",
+        "test/output/gdrive_test_2.txt",
+    ]
 
     for file in files:
         if exists(file):
@@ -31,9 +31,9 @@ def test_tag():
         if exists(file):
             os.remove(file)
 
-    download_from_yaml(yaml_file="example/download.yaml",
-                       output_dir="test/output",
-                       tags=['testing'])
+    download_from_yaml(
+        yaml_file="example/download.yaml", output_dir="test/output", tags=["testing"]
+    )
 
     for file in tagged_files:
         assert exists(file)
