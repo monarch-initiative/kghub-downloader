@@ -6,10 +6,10 @@ from unittest import mock
 @mock.patch("google.cloud.storage.Client")
 def test_mirror(client):
     mirror_to_bucket(
-               local_file='test/resources/testfile.txt',
-               bucket_url='gs://monarch-test/',
-               remote_file='kghub_test_upload.txt'
-          )
+        local_file="test/resources/testfile.txt",
+        bucket_url="gs://monarch-test/",
+        remote_file="kghub_test_upload.txt",
+    )
 
     bucket = client().bucket
     bucket.assert_called_with("monarch-test")
