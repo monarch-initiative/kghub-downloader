@@ -13,3 +13,11 @@
 #   local_name: molecule.json
 #   index: chembl_28_molecule
 #   tag: ebi
+
+-
+   url: gdrive:10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
+   local_name: gdrive_test_1.txt
+
+-
+  url: https://drive.google.com/uc?id=10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
+  local_name: gdrive_test_2.txt 

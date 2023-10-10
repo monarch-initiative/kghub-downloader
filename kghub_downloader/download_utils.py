@@ -18,7 +18,11 @@ from tqdm.auto import tqdm  # type: ignore
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
+import gdown
 
+GDOWN_MAP = {
+     "gdrive": "https://drive.google.com/uc?id="
+ }
 
 def download_from_yaml(yaml_file: str,
                        output_dir: str,
@@ -88,6 +92,21 @@ def download_from_yaml(yaml_file: str,
                         with urlopen(req) as response, open(outfile, 'wb') as out_file:  # type: ignore
                             if snippet_only:
                                 data = response.read(5120)  # first 5 kB of a `bytes` object
+                            elif any(url.startswith(str(i)) for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())):
+                                # Check if url starts with a key or a value
+                                for key, value in GDOWN_MAP.items():
+                                    if url.startswith(str(value)):
+                                        # If value, then download the file directly
+                                        gdown.download(url, output=outfile)
+                                        break
+                                    elif url.startswith(str(key)):
+                                        # If key, replace key by value and then download
+                                        new_url = url.replace(str(key)+":", str(value))
+                                        gdown.download(new_url, output=outfile)
+                                        break
+                                else:
+                                    # If the loop completes without breaking (i.e., no match found), throw an error
+                                    raise ValueError("Invalid URL")
                             else:
                                 data = response.read()  # a `bytes` object
                             out_file.write(data)
