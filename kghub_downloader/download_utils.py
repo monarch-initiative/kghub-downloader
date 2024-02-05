@@ -15,7 +15,7 @@ import compress_json  # type: ignore
 import elasticsearch
 import elasticsearch.helpers
 import gdown
-import pandas as pd
+
 import requests
 import yaml
 from google.cloud import storage
@@ -344,13 +344,11 @@ def get_uniprot_values_organism(
     # File to keep track of organism id's with no Uniprot data
     empty_org_file = outyamls + "/empty_organism_queries.tsv"
     empty_org_file_header = "Organism_ID"
+    empty_orgs = []
     if os.path.exists(empty_org_file):
-        df = pd.read_csv(empty_org_file)
-        empty_orgs = df[empty_org_file_header].tolist()
-        empty_orgs = list(map(str, empty_orgs))
-
-    elif not os.path.exists(empty_org_file):
-        empty_orgs = []
+        with open(empty_org_file, newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            empty_orgs = [str(row[empty_org_file_header]) for row in reader]
 
     e = open(empty_org_file, "w")
     org_writer = csv.writer(e, delimiter="\t")
