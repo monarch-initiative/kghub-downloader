@@ -58,7 +58,11 @@ def download_from_yaml(
         data = yaml.load(f, Loader=yaml.FullLoader)
         # Limit to only tagged downloads, if tags are passed in
         if tags:
-            data = [item for item in data if "tag" in item and item["tag"] and item["tag"] in tags]
+            data = [
+                item
+                for item in data
+                if "tag" in item and item["tag"] and item["tag"] in tags
+            ]
 
         for item in tqdm(data, desc="Downloading files"):
             ###########
@@ -70,7 +74,9 @@ def download_from_yaml(
                 "zip",
                 ".gz",
             ]:  # Can't truncate compressed files
-                logging.error("Asked to download snippets; can't snippet {}".format(item))
+                logging.error(
+                    "Asked to download snippets; can't snippet {}".format(item)
+                )
                 continue
 
             local_name = (
@@ -84,7 +90,9 @@ def download_from_yaml(
             logging.info("Retrieving %s from %s" % (outfile, item["url"]))
 
             if "local_name" in item:
-                local_file_dir = os.path.join(output_dir, os.path.dirname(item["local_name"]))
+                local_file_dir = os.path.join(
+                    output_dir, os.path.dirname(item["local_name"])
+                )
                 if not os.path.exists(local_file_dir):
                     logging.info(f"Creating local directory {local_file_dir}")
                     pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
@@ -95,7 +103,10 @@ def download_from_yaml(
                     os.remove(outfile)
                 else:
                     logging.info("Using cached version of {}".format(outfile))
-                    if "local_name" in item and item["local_name"] != "uniprot_genome_features":
+                    if (
+                        "local_name" in item
+                        and item["local_name"] != "uniprot_genome_features"
+                    ):
                         continue
 
             # Download file
@@ -105,7 +116,9 @@ def download_from_yaml(
                 if "url" in item:
                     url = parse_url(item["url"])
                     if url.startswith("gs://"):
-                        Blob.from_string(url, client=storage.Client()).download_to_filename(outfile)
+                        Blob.from_string(
+                            url, client=storage.Client()
+                        ).download_to_filename(outfile)
                     elif any(
                         url.startswith(str(i))
                         for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())
@@ -129,7 +142,9 @@ def download_from_yaml(
                         try:
                             with urlopen(req) as response, open(outfile, "wb") as out_file:  # type: ignore
                                 if snippet_only:
-                                    data = response.read(5120)  # first 5 kB of a `bytes` object
+                                    data = response.read(
+                                        5120
+                                    )  # first 5 kB of a `bytes` object
                                 else:
                                     data = response.read()  # a `bytes` object
                                 out_file.write(data)
@@ -146,17 +161,23 @@ def download_from_yaml(
                         except URLError:
                             logging.error(f"Failed to download: {url}")
                             raise
-            elif "local_name" in item and item["local_name"] == "uniprot_genome_features":
+            elif (
+                "local_name" in item and item["local_name"] == "uniprot_genome_features"
+            ):
                 outfile = outfile.split(item["local_name"])[0]
                 outfile = outfile + "ncbitaxon_removed_subset.json"
                 url = parse_url(item["url"])
                 if url.startswith("gs://"):
-                    Blob.from_string(url, client=storage.Client()).download_to_filename(outfile)
+                    Blob.from_string(url, client=storage.Client()).download_to_filename(
+                        outfile
+                    )
                 download_from_api(item, outfile)
 
             # If mirror, upload to remote storage
             if mirror:
-                mirror_to_bucket(local_file=outfile, bucket_url=mirror, remote_file=local_name)
+                mirror_to_bucket(
+                    local_file=outfile, bucket_url=mirror, remote_file=local_name
+                )
 
     return None
 
@@ -216,9 +237,13 @@ def download_from_api(yaml_item, outfile) -> None:
     """
     if yaml_item["api"] == "elasticsearch":
         es_conn = elasticsearch.Elasticsearch(hosts=[yaml_item["url"]])
-        query_data = compress_json.local_load(os.path.join(os.getcwd(), yaml_item["query_file"]))
+        query_data = compress_json.local_load(
+            os.path.join(os.getcwd(), yaml_item["query_file"])
+        )
         output = open(outfile, "w")
-        records = elastic_search_query(es_conn, index=yaml_item["index"], query=query_data)
+        records = elastic_search_query(
+            es_conn, index=yaml_item["index"], query=query_data
+        )
         json.dump(records, output)
         return None
     elif yaml_item["api"] == "rest":
@@ -394,7 +419,16 @@ def check_for_file_existence_in_batch(batch, outyamls, empty_orgs):
 
 
 def _get_uniprot_batch_organism(
-    organism_ids, base_url, i, fields, keywords, size, batch_size, values, outyamls, empty_orgs
+    organism_ids,
+    base_url,
+    i,
+    fields,
+    keywords,
+    size,
+    batch_size,
+    values,
+    outyamls,
+    empty_orgs,
 ):
     """Get batch of Uniprot data."""
     # Organisms in this batch found with empty queries
@@ -403,7 +437,9 @@ def _get_uniprot_batch_organism(
     nonexistent_batch = check_for_file_existence_in_batch(batch, outyamls, empty_orgs)
 
     if len(nonexistent_batch) > 0:
-        query = "%20OR%20".join(["organism_id:" + organism_id for organism_id in nonexistent_batch])
+        query = "%20OR%20".join(
+            ["organism_id:" + organism_id for organism_id in nonexistent_batch]
+        )
         if len(keywords) > 0:
             k = "&keywords=" + "+".join(keywords)
         else:
