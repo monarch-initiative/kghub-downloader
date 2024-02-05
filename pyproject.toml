@@ -18,7 +18,7 @@ typer = "^0.7.0"
 mkdocs = "^1.4.0"
 mkdocs-material = "^8.5.6"
 mkdocstrings = {extras = ["python"], version = "^0.20.0"}
-gdown = "^4.7.1"
+gdown = ">=4.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
