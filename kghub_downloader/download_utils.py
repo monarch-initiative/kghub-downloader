@@ -206,7 +206,7 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
                 return False
 
         else:
-            raise ValueError("Currently, only Google Cloud storage is supported.")
+            raise ValueError("Currently, only Google Cloud and S3 storage is supported.")
 
     return None
 
