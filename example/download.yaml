@@ -12,24 +12,6 @@
 - url: https://drive.google.com/uc?id=10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
   local_name: gdrive_test_2.txt
 
-- base_url: https://rest.uniprot.org/uniprotkb/
-  api: uniprot
-  url: 'gdrive:1Ai52w4fu4XPu5w4wdE8y3rymEgN0BDqe'
-  local_name: 'uniprot_genome_features'
-  fields: [
-    "organism_id",
-    "id", 
-    "accession",
-    "protein_name",
-    "ec",
-    "ft_binding"
-  ]
-  keywords: [
-    "Reference+proteome"
-  ]
-  size: 500
-  batch_size: 1
-  test: True
 # - url: https://www.ebi.ac.uk/chembl/elk/es/
 #   api: elasticsearch
 #   query_file: example/query.json
