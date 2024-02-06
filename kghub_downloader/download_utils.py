@@ -20,6 +20,8 @@ from google.cloud import storage
 from google.cloud.storage.blob import Blob
 from typing import List, Optional
 import gdown
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 GDOWN_MAP = {"gdrive": "https://drive.google.com/uc?id="}
 
@@ -188,9 +190,20 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
             blob.upload_from_filename(local_file)
 
         elif bucket_url.startswith("s3://"):
-            raise ValueError("Currently, only Google Cloud storage is supported.")
-            # bashCommand = f"aws s3 cp {outfile} {mirror}"
-            # subprocess.run(bashCommand.split())
+            # Create an S3 client
+            s3 = boto3.client('s3')
+
+            try:
+                # Upload the file
+                s3.upload_file(local_file, bucket_name, remote_file)
+                print(f"File {local_file} uploaded to {bucket_name}/{remote_file}")
+                return True
+            except FileNotFoundError:
+                print(f"The file {local_file} was not found")
+                return False
+            except NoCredentialsError:
+                print("Credentials not available")
+                return False
 
         else:
             raise ValueError("Currently, only Google Cloud storage is supported.")
