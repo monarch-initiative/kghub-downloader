@@ -191,7 +191,7 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
 
         elif bucket_url.startswith("s3://"):
             # Create an S3 client
-            s3 = boto3.client('s3')
+            s3 = boto3.client("s3")
 
             try:
                 # Upload the file

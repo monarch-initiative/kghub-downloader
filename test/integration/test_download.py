@@ -24,10 +24,7 @@ def test_download():
 
 
 def test_tag():
-    files = [
-        "test/output/zfin/fish_phenotype.txt",
-        "test/output/test_file.yaml"
-    ]
+    files = ["test/output/zfin/fish_phenotype.txt", "test/output/test_file.yaml"]
     tagged_files = ["test/output/gdrive_test_1.txt"]
 
     for file in files:
