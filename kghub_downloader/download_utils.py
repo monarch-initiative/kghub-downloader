@@ -1,27 +1,30 @@
-import os, pathlib, re
+import json
 import logging
-
-import json, yaml
-import compress_json  # type: ignore
-
-# from compress_json import compress_json
-
+import os
+import pathlib
+import re
 from multiprocessing.sharedctypes import Value
-
+from typing import List, Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-
+import boto3
+import compress_json  # type: ignore
 import elasticsearch
 import elasticsearch.helpers
-
-from tqdm.auto import tqdm  # type: ignore
+import gdown
+import yaml
+from botocore.exceptions import NoCredentialsError
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
-from typing import List, Optional
-import gdown
-import boto3
-from botocore.exceptions import NoCredentialsError
+from tqdm.auto import tqdm  # type: ignore
+
+# from compress_json import compress_json
+
+
+
+
+
 
 GDOWN_MAP = {"gdrive": "https://drive.google.com/uc?id="}
 
@@ -159,6 +162,8 @@ def download_from_yaml(
 
 
 def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
+    bucket_split = bucket_url.split("/")
+    bucket_name = bucket_split[2]
     with open(local_file, "rb"):
         if bucket_url.startswith("gs://"):
 
@@ -167,8 +172,6 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
 
             # Connect to GCS Bucket
             storage_client = storage.Client()
-            bucket_split = bucket_url.split("/")
-            bucket_name = bucket_split[2]
             bucket = storage_client.bucket(bucket_name)
 
             # Upload blob from local file
@@ -208,7 +211,9 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
                 return False
 
         else:
-            raise ValueError("Currently, only Google Cloud and S3 storage is supported.")
+            raise ValueError(
+                "Currently, only Google Cloud and S3 storage is supported."
+            )
 
     return None
 

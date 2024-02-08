@@ -1,6 +1,7 @@
-from kghub_downloader.download_utils import download_from_yaml
-from os.path import exists
 import os
+from os.path import exists
+
+from kghub_downloader.download_utils import download_from_yaml
 
 
 # Integration test using example configuration

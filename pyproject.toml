@@ -24,6 +24,9 @@ boto3 = ">=1.34.35"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 
+[tool.poetry.group.dev.dependencies]
+moto = "^5.0.1"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
