@@ -195,6 +195,8 @@ def mirror_to_bucket(local_file, bucket_url, remote_file) -> None:
 
             try:
                 # Upload the file
+                # ! This will only work if the user has the AWS IAM user
+                # ! access keys set up as environment variables.
                 s3.upload_file(local_file, bucket_name, remote_file)
                 print(f"File {local_file} uploaded to {bucket_name}/{remote_file}")
                 return True
