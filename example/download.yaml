@@ -12,6 +12,9 @@
 - url: https://drive.google.com/uc?id=10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
   local_name: gdrive_test_2.txt
 
+- url: s3://monarch-kg-test/kghub_downloader_test_file.yaml
+  local_name: test_file.yaml
+
 # - url: https://www.ebi.ac.uk/chembl/elk/es/
 #   api: elasticsearch
 #   query_file: example/query.json

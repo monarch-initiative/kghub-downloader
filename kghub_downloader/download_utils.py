@@ -109,6 +109,11 @@ def download_from_yaml(
                     Blob.from_string(url, client=storage.Client()).download_to_filename(
                         outfile
                     )
+                elif url.startswith("s3://"):
+                    s3 = boto3.client("s3")
+                    bucket_name = url.split("/")[2]
+                    remote_file = "/".join(url.split("/")[3:])
+                    s3.download_file(bucket_name, remote_file, outfile)
                 elif any(
                     url.startswith(str(i))
                     for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())
