@@ -529,7 +529,7 @@ For an example, see <a href="example/download.yaml">example/download.yaml</a></p
  Then, set the <code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable to point to that file.</p>
 <p>Mirorring local files to Amazon AWS S3 bucket requires the following:
  - <a href="https://portal.aws.amazon.com/">Create an AWS account</a>
- - <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started.html">Create an IAM user in AWS</a>: This enables getting the <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> needed for authentication. These two shoul dbe stored as environment variables in the user's system.
+ - <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started.html">Create an IAM user in AWS</a>: This enables getting the <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> needed for authentication. These two should be stored as environment variables in the user's system.
  - <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html">Create an S3 bucket</a>: This will be the destination for pushing local files.</p>
 </blockquote>
 <p>You can also include any secrets like API keys you have set as environment variables using <code>{VARIABLE_NAME}</code>, for example:<br />
