@@ -3,6 +3,7 @@ name = "kghub-downloader"
 version = "0.0.0"
 description = "Downloads and caches files for knowledge graph ETL"
 authors = ["The Monarch Initiative <info@monarchinitiative.org>"]
+readme = "README.md"
 
 [tool.poetry.scripts]
 downloader = "kghub_downloader.main:typer_app"
