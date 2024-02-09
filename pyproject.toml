@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kghub-downloader"
-version = "0.3.5"
+version = "0.0.0"
 description = "Downloads and caches files for knowledge graph ETL"
 authors = ["The Monarch Initiative <info@monarchinitiative.org>"]
 
@@ -27,6 +27,11 @@ pytest = "^6.2.5"
 [tool.poetry.group.dev.dependencies]
 moto = "^5.0.1"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "pep440"
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
