@@ -22,10 +22,6 @@ from tqdm.auto import tqdm  # type: ignore
 # from compress_json import compress_json
 
 
-
-
-
-
 GDOWN_MAP = {"gdrive": "https://drive.google.com/uc?id="}
 
 
