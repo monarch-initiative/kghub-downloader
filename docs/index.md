@@ -23,6 +23,7 @@ Available options are:
   - `http(s)`
   - Google Cloud Storage (`gs://`)
   - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
+  - Amazon AWS S3 bucket (`s3://`)
 - **local_name**: The name to save the file as locally
 - **tag**: A tag to use to filter downloads
 - **api**: The API to use to download the file. Currently supported: `elasticsearch`
@@ -36,6 +37,11 @@ Available options are:
 > - [add the service account to the relevant bucket](https://cloud.google.com/storage/docs/access-control/using-iam-permissions#bucket-iam) and  
 > - [download a JSON key](https://cloud.google.com/iam/docs/keys-create-delete) for that service account.  
 >  Then, set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to that file.
+>
+> Mirorring local files to Amazon AWS S3 bucket requires the following:
+>  - [Create an AWS account](https://portal.aws.amazon.com/)
+>  - [Create an IAM user in AWS](https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started.html): This enables getting the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` needed for authentication. These two shoul dbe stored as environment variables in the user's system.
+>  - [Create an S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html): This will be the destination for pushing local files.
 
 You can also include any secrets like API keys you have set as environment variables using `{VARIABLE_NAME}`, for example:  
 ```yaml

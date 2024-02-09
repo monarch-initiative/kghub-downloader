@@ -1,6 +1,8 @@
-from kghub_downloader.download_utils import *
+import os
 
-import os, pytest
+import pytest
+
+from kghub_downloader.download_utils import *
 
 os.environ["TEST_URL"] = "https://testurl.com/fake/download/rootpath"
 os.environ["TEST_KEY"] = "123456789987654321"
