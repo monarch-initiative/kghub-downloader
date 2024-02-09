@@ -40,7 +40,7 @@ Available options are:
 >
 > Mirorring local files to Amazon AWS S3 bucket requires the following:
 >  - [Create an AWS account](https://portal.aws.amazon.com/)
->  - [Create an IAM user in AWS](https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started.html): This enables getting the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` needed for authentication. These two shoul dbe stored as environment variables in the user's system.
+>  - [Create an IAM user in AWS](https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started.html): This enables getting the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` needed for authentication. These two should be stored as environment variables in the user's system.
 >  - [Create an S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html): This will be the destination for pushing local files.
 
 You can also include any secrets like API keys you have set as environment variables using `{VARIABLE_NAME}`, for example:  
