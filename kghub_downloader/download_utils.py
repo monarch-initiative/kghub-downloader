@@ -1,8 +1,11 @@
+import ftplib
 import json
 import logging
 import os
 import pathlib
 import re
+from fnmatch import fnmatch
+from ftplib import error_perm
 from multiprocessing.sharedctypes import Value
 from typing import List, Optional
 from urllib.error import URLError
@@ -42,6 +45,7 @@ def download_from_yaml(
         snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
         tags: Limit to only downloads with this tag
         mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
+        glob: Optional glob pattern to limit downloading to
     Returns:
         None.
     """
@@ -49,7 +53,6 @@ def download_from_yaml(
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     with open(yaml_file) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-
         # Limit to only tagged downloads, if tags are passed in
         if tags:
             data = [
@@ -110,6 +113,21 @@ def download_from_yaml(
                     bucket_name = url.split("/")[2]
                     remote_file = "/".join(url.split("/")[3:])
                     s3.download_file(bucket_name, remote_file, outfile)
+                elif url.startswith("ftp"):
+                    glob = None
+                    if "glob" in item:
+                        glob = item["glob"]
+                    ftp_username = (
+                        os.getenv("FTP_USERNAME") if os.getenv("FTP_USERNAME") else None
+                    )
+                    ftp_password = (
+                        os.getenv("FTP_PASSWORD") if os.getenv("FTP_PASSWORD") else None
+                    )
+                    host = url.split("/")[0]
+                    path = "/".join(url.split("/")[1:])
+                    ftp = ftplib.FTP(host)
+                    ftp.login(ftp_username, ftp_password)
+                    download_via_ftp(ftp, path, outfile, glob)
                 elif any(
                     url.startswith(str(i))
                     for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())
@@ -292,3 +310,51 @@ def parse_url(url: str):
             )
         url = url.replace("{" + i + "}", secret)
     return url
+
+
+def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
+    """Recursively download files from an FTP server matching the glob pattern."""
+    try:
+        # Change to the current directory on the FTP server
+        ftp_server.cwd(current_dir)
+
+        # List items in the current directory
+        items = ftp_server.nlst()
+
+        for item in items:
+            # Check if the item is a directory
+            if is_directory(ftp_server, item):
+                # Recursively download from the found directory
+                download_via_ftp(
+                    ftp_server, item, os.path.join(local_dir, item), glob_pattern
+                )
+                # Go back to the parent directory
+                ftp_server.cwd("..")
+            else:
+                # Check if the file matches the pattern
+                if is_matching_filename(item, glob_pattern):
+                    # Download the file
+                    local_filepath = os.path.join(local_dir, item)
+                    os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+                    with open(local_filepath, "wb") as f:
+                        ftp_server.retrbinary(f"RETR {item}", f.write)
+    except error_perm as e:
+        # Handle permission errors
+        print(f"Permission denied: {e}")
+
+
+def is_directory(ftp_server, name):
+    """Check if the given name is a directory on the FTP server."""
+    current = ftp_server.pwd()
+    try:
+        ftp_server.cwd(name)  # Try changing to the directory
+        return True
+    except error_perm:
+        return False
+    finally:
+        ftp_server.cwd(current)  # Always change back to the original directory
+
+
+def is_matching_filename(filename, glob_pattern):
+    """Check if the filename matches the glob pattern."""
+    return fnmatch(filename, glob_pattern) if glob_pattern else True
