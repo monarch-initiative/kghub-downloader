@@ -21,6 +21,8 @@ For an example, see [example/download.yaml](example/download.yaml)
 Available options are:
 - \***url**: The URL to download from. Currently supported:  
   - `http(s)`
+  - `ftp`
+    - with `glob:` option to download files with specific extensions (only with ftp as of now).
   - Google Cloud Storage (`gs://`)
   - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
   - Amazon AWS S3 bucket (`s3://`)
