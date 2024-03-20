@@ -511,6 +511,8 @@ For an example, see <a href="example/download.yaml">example/download.yaml</a></p
 <p>Available options are:
 - *<strong>url</strong>: The URL to download from. Currently supported:<br />
   - <code>http(s)</code>
+  - <code>ftp</code>
+    - with <code>glob:</code> option to download files with specific extensions (only with ftp as of now and looks recursively).
   - Google Cloud Storage (<code>gs://</code>)
   - Google Drive (<code>gdrive://</code> or <a href="https://drive.google.com/">https://drive.google.com/</a>...). The file must be publicly accessible.
   - Amazon AWS S3 bucket (<code>s3://</code>)
