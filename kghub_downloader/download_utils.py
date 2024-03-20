@@ -321,23 +321,27 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         # List items in the current directory
         items = ftp_server.nlst()
 
-        for item in items:
-            # Check if the item is a directory
-            if is_directory(ftp_server, item):
-                # Recursively download from the found directory
-                download_via_ftp(
-                    ftp_server, item, os.path.join(local_dir, item), glob_pattern
-                )
-                # Go back to the parent directory
-                ftp_server.cwd("..")
-            else:
-                # Check if the file matches the pattern
-                if is_matching_filename(item, glob_pattern):
-                    # Download the file
-                    local_filepath = os.path.join(local_dir, item)
-                    os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-                    with open(local_filepath, "wb") as f:
-                        ftp_server.retrbinary(f"RETR {item}", f.write)
+        # Initialize tqdm progress bar
+        with tqdm(total=len(items), desc=f"Downloading from {current_dir} via ftp") as pbar:
+            for item in items:
+                # Check if the item is a directory
+                if is_directory(ftp_server, item):
+                    # Recursively download from the found directory
+                    download_via_ftp(
+                        ftp_server, item, os.path.join(local_dir, item), glob_pattern
+                    )
+                    # Go back to the parent directory
+                    ftp_server.cwd("..")
+                else:
+                    # Check if the file matches the pattern
+                    if is_matching_filename(item, glob_pattern):
+                        # Download the file
+                        local_filepath = os.path.join(local_dir, item)
+                        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+                        with open(local_filepath, "wb") as f:
+                            ftp_server.retrbinary(f"RETR {item}", f.write)
+                # Update the progress bar after each item is processed
+                pbar.update(1)
     except error_perm as e:
         # Handle permission errors
         print(f"Permission denied: {e}")
