@@ -1,8 +1,8 @@
 import ftplib
 import os
-from pathlib import Path
 import unittest
 from ftplib import error_perm
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from kghub_downloader.download_utils import (
@@ -71,7 +71,9 @@ class TestFTPDownload(unittest.TestCase):
         # Test with no pattern provided (should always return True)
         self.assertTrue(is_matching_filename("file.jpg", None))
 
-    @unittest.skipIf(os.getenv('GITHUB_ACTIONS') == 'true', "This test needs credentials to run.")
+    @unittest.skipIf(
+        os.getenv("GITHUB_ACTIONS") == "true", "This test needs credentials to run."
+    )
     def test_actual_upload_download(self):
         # Credentials available at: https://dlptest.com/ftp-test/
         pwd = Path.cwd()
@@ -81,11 +83,11 @@ class TestFTPDownload(unittest.TestCase):
         ftp = ftplib.FTP("ftp.dlptest.com")
         ftp.login(os.environ["FTP_USERNAME"], os.environ["FTP_PASSWORD"])
         # upload the file ../resources/test_file.txt to the server
-        ftp.storbinary("STOR test_file.txt", open(f"{resources_dir}/testfile.txt", "rb"))
+        ftp.storbinary(
+            "STOR test_file.txt", open(f"{resources_dir}/testfile.txt", "rb")
+        )
         # download the file test_file.txt from the server
-        with open(f"{output_dir}/test_file.txt", "wb") as f:
-            ftp.retrbinary("RETR test_file.txt", f.write)
-        ftp.quit()
+        download_via_ftp(ftp, "/", f"{output_dir}", "*.txt")
         # Check that the file was downloaded correctly
         self.assertTrue(os.path.exists(f"{output_dir}/test_file.txt"))
         os.remove(f"{output_dir}/test_file.txt")
