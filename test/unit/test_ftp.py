@@ -5,8 +5,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from kghub_downloader.download_utils import (download_via_ftp, is_directory,
-                                             is_matching_filename)
+from kghub_downloader.download_utils import (
+    download_via_ftp,
+    is_directory,
+    is_matching_filename,
+)
 
 
 class TestFTPDownload(unittest.TestCase):
