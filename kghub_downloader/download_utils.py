@@ -361,31 +361,33 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = []
             for item in items:
-                # Check if the item is a directory
-                if is_directory(ftp_server, item):
+                item_path = os.path.join(current_dir, item)
+                if is_directory(ftp_server, item_path):
                     # Recursively download from the found directory
                     future = executor.submit(
                         download_via_ftp,
                         ftp_server,
-                        item,
+                        item_path,
                         os.path.join(local_dir, item),
                         glob_pattern,
                     )
                     futures.append(future)
-                    # Go back to the parent directory
-                    ftp_server.cwd("..")
                 else:
                     # Check if the file matches the pattern
                     if is_matching_filename(item, glob_pattern):
                         # Submit the download task to the thread pool
                         future = executor.submit(
-                            download_file, ftp_server, item, local_dir
+                            download_file, ftp_server, item_path, local_dir
                         )
                         futures.append(future)
 
             # Wait for all submitted tasks to complete
             for future in futures:
                 future.result()
+
+        # Go back to the parent directory after processing all items
+        ftp_server.cwd("..")
+
     except ftplib.error_perm as e:
         # Handle permission errors
         print(f"Permission denied: {e}")
