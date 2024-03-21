@@ -51,7 +51,7 @@ def download_from_yaml(
         None.
     """
 
-    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     with open(yaml_file) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
         # Limit to only tagged downloads, if tags are passed in
@@ -376,15 +376,15 @@ def download_via_ftp(
         ftp.login(ftp_username, ftp_password)
         ftp.cwd(dir_path)
         items = ftp.nlst()
-        print(f"Items in {dir_path}: {items}")  # Debugging line
+        # print(f"Items in {dir_path}: {items}")  # ! Debugging line
         ftp.quit()
 
         # Create a pool of worker processes
         with Pool(processes=os.cpu_count()) as pool:
             for item in items:
                 item_path = os.path.join(dir_path, item)
-                if is_directory(ftp_server_host, item_path):
-                    print(f"Found directory: {item_path}")  # Debugging line
+                if is_directory(ftp, item_path):
+                    # print(f"Found directory: {item_path}")  # ! Debugging line
                     # Recursively download from the found directory
                     download_via_ftp(
                         ftp_server_host,
@@ -395,7 +395,7 @@ def download_via_ftp(
                 else:
                     # Check if the file matches the pattern
                     if is_matching_filename(item, glob_pattern):
-                        print(f"Downloading file: {item}")  # Debugging line
+                        # print(f"Downloading file: {item}")  # ! Debugging line
                         # Download the file using a worker process
                         pool.apply_async(
                             download_file,
