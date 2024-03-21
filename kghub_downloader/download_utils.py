@@ -358,7 +358,7 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         items = ftp_server.nlst()
 
         # Use ThreadPoolExecutor to create a pool of threads
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=1) as executor:
             futures = []
             for item in items:
                 item_path = os.path.join(current_dir, item)
