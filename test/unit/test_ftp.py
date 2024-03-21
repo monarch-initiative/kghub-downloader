@@ -1,15 +1,12 @@
 import ftplib
 import os
+import shutil
 import unittest
-from ftplib import error_perm
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from kghub_downloader.download_utils import (
-    download_via_ftp,
-    is_directory,
-    is_matching_filename,
-)
+from kghub_downloader.download_utils import (download_via_ftp, is_directory,
+                                             is_matching_filename)
 
 
 class TestFTPDownload(unittest.TestCase):
@@ -90,4 +87,16 @@ class TestFTPDownload(unittest.TestCase):
         download_via_ftp(ftp, "/", f"{output_dir}", "*.txt")
         # Check that the file was downloaded correctly
         self.assertTrue(os.path.exists(f"{output_dir}/test_file.txt"))
-        os.remove(f"{output_dir}/test_file.txt")
+        empty_directory(output_dir)
+
+
+def empty_directory(directory):
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}. Reason: {e}")
