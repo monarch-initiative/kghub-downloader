@@ -365,7 +365,7 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
                 if is_directory(ftp_server, item_path):
                     # Recursively download from the found directory
                     future = executor.submit(
-                        download_via_ftp,
+                        download_file,
                         ftp_server,
                         item_path,
                         os.path.join(local_dir, item),
