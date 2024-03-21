@@ -1,10 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 import ftplib
 import json
 import logging
 import os
 import pathlib
 import re
-from concurrent.futures import ThreadPoolExecutor
 from fnmatch import fnmatch
 from ftplib import error_perm
 from multiprocessing.sharedctypes import Value
@@ -358,36 +358,34 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         items = ftp_server.nlst()
 
         # Use ThreadPoolExecutor to create a pool of threads
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = []
             for item in items:
-                item_path = os.path.join(current_dir, item)
-                if is_directory(ftp_server, item_path):
+                # Check if the item is a directory
+                if is_directory(ftp_server, item):
                     # Recursively download from the found directory
                     future = executor.submit(
-                        download_file,
+                        download_via_ftp,
                         ftp_server,
-                        item_path,
+                        item,
                         os.path.join(local_dir, item),
                         glob_pattern,
                     )
                     futures.append(future)
+                    # Go back to the parent directory
+                    ftp_server.cwd("..")
                 else:
                     # Check if the file matches the pattern
                     if is_matching_filename(item, glob_pattern):
                         # Submit the download task to the thread pool
                         future = executor.submit(
-                            download_file, ftp_server, item_path, local_dir
+                            download_file, ftp_server, item, local_dir
                         )
                         futures.append(future)
 
             # Wait for all submitted tasks to complete
             for future in futures:
                 future.result()
-
-        # Go back to the parent directory after processing all items
-        ftp_server.cwd("..")
-
     except ftplib.error_perm as e:
         # Handle permission errors
         print(f"Permission denied: {e}")
