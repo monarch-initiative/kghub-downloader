@@ -356,7 +356,8 @@ def download_file(ftp_details, item, local_dir):
     with FTP(ftp_server) as ftp:
         ftp.login()  # Add appropriate login credentials if needed
         ftp.cwd(current_dir)
-        local_filepath = os.path.join(local_dir, item)
+        local_filepath = local_dir
+        # local_filepath = os.path.join(local_dir, item)
         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
         with open(local_filepath, "wb") as f:
             ftp.retrbinary(f"RETR {item}", f.write)
