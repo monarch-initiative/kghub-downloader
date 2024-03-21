@@ -2,12 +2,13 @@ import ftplib
 import json
 import logging
 import os
-import pathlib
 import re
 from fnmatch import fnmatch
-from ftplib import error_perm
+from ftplib import FTP, error_perm
+from multiprocessing import Pool
 from multiprocessing.sharedctypes import Value
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Union
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -117,17 +118,17 @@ def download_from_yaml(
                     glob = None
                     if "glob" in item:
                         glob = item["glob"]
-                    ftp_username = (
-                        os.getenv("FTP_USERNAME") if os.getenv("FTP_USERNAME") else None
-                    )
-                    ftp_password = (
-                        os.getenv("FTP_PASSWORD") if os.getenv("FTP_PASSWORD") else None
-                    )
+                    # ftp_username = (
+                    #     os.getenv("FTP_USERNAME") if os.getenv("FTP_USERNAME") else None
+                    # )
+                    # ftp_password = (
+                    #     os.getenv("FTP_PASSWORD") if os.getenv("FTP_PASSWORD") else None
+                    # )
                     host = url.split("/")[0]
                     path = "/".join(url.split("/")[1:])
-                    ftp = ftplib.FTP(host)
-                    ftp.login(ftp_username, ftp_password)
-                    download_via_ftp(ftp, path, outfile, glob)
+                    # ftp = ftplib.FTP(host)
+                    # ftp.login(ftp_username, ftp_password)
+                    download_via_ftp(host, path, outfile, glob)
                 elif any(
                     url.startswith(str(i))
                     for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())
@@ -312,41 +313,101 @@ def parse_url(url: str):
     return url
 
 
-def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
-    """Recursively download files from an FTP server matching the glob pattern."""
+# def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
+#     """Recursively download files from an FTP server matching the glob pattern."""
+#     try:
+#         # Change to the current directory on the FTP server
+#         ftp_server.cwd(current_dir)
+
+#         # List items in the current directory
+#         items = ftp_server.nlst()
+
+#         # Initialize tqdm progress bar
+#         with tqdm(
+#             total=len(items), desc=f"Downloading from {current_dir} via ftp"
+#         ) as pbar:
+#             for item in items:
+#                 # Check if the item is a directory
+#                 if is_directory(ftp_server, item):
+#                     # Recursively download from the found directory
+#                     download_via_ftp(
+#                         ftp_server, item, os.path.join(local_dir, item), glob_pattern
+#                     )
+#                     # Go back to the parent directory
+#                     ftp_server.cwd("..")
+#                 else:
+#                     # Check if the file matches the pattern
+#                     if is_matching_filename(item, glob_pattern):
+#                         # Download the file
+#                         local_filepath = os.path.join(local_dir, item)
+#                         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+#                         with open(local_filepath, "wb") as f:
+#                             ftp_server.retrbinary(f"RETR {item}", f.write)
+#                 # Update the progress bar after each item is processed
+#                 pbar.update(1)
+#     except error_perm as e:
+#         # Handle permission errors
+#         print(f"Permission denied: {e}")
+
+
+def download_file(ftp_details, item, local_dir):
+    """Download a single file from the FTP server."""
+    ftp_server, current_dir = ftp_details
+    with FTP(ftp_server) as ftp:
+        ftp.login()  # Add appropriate login credentials if needed
+        ftp.cwd(current_dir)
+        local_filepath = os.path.join(local_dir, item)
+        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+        with open(local_filepath, "wb") as f:
+            ftp.retrbinary(f"RETR {item}", f.write)
+
+
+def download_via_ftp(
+    ftp_server_host: str,
+    dir_path: str,
+    local_dir: Union[Path, str],
+    glob_pattern: str = None,
+):
+    """Recursively download files from an FTP server matching the glob pattern using multiprocessing."""
     try:
-        # Change to the current directory on the FTP server
-        ftp_server.cwd(current_dir)
+        ftp = FTP(ftp_server_host)
+        ftp_username = os.getenv("FTP_USERNAME") if os.getenv("FTP_USERNAME") else None
+        ftp_password = os.getenv("FTP_PASSWORD") if os.getenv("FTP_PASSWORD") else None
+        ftp.login(ftp_username, ftp_password)
+        ftp.cwd(dir_path)
+        items = ftp.nlst()
+        print(f"Items in {dir_path}: {items}")  # Debugging line
+        ftp.quit()
 
-        # List items in the current directory
-        items = ftp_server.nlst()
-
-        # Initialize tqdm progress bar
-        with tqdm(
-            total=len(items), desc=f"Downloading from {current_dir} via ftp"
-        ) as pbar:
+        # Create a pool of worker processes
+        with Pool(processes=os.cpu_count()) as pool:
             for item in items:
-                # Check if the item is a directory
-                if is_directory(ftp_server, item):
+                item_path = os.path.join(dir_path, item)
+                if is_directory(ftp_server_host, item_path):
+                    print(f"Found directory: {item_path}")  # Debugging line
                     # Recursively download from the found directory
                     download_via_ftp(
-                        ftp_server, item, os.path.join(local_dir, item), glob_pattern
+                        ftp_server_host,
+                        item_path,
+                        os.path.join(local_dir, item),
+                        glob_pattern,
                     )
-                    # Go back to the parent directory
-                    ftp_server.cwd("..")
                 else:
                     # Check if the file matches the pattern
                     if is_matching_filename(item, glob_pattern):
-                        # Download the file
-                        local_filepath = os.path.join(local_dir, item)
-                        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-                        with open(local_filepath, "wb") as f:
-                            ftp_server.retrbinary(f"RETR {item}", f.write)
-                # Update the progress bar after each item is processed
-                pbar.update(1)
+                        print(f"Downloading file: {item}")  # Debugging line
+                        # Download the file using a worker process
+                        pool.apply_async(
+                            download_file,
+                            args=((ftp_server_host, dir_path), item, local_dir),
+                        )
+
+            # Close the pool and wait for all tasks to complete
+            pool.close()
+            pool.join()
+
     except error_perm as e:
-        # Handle permission errors
-        print(f"Permission denied: {e}")
+        print(f"An error occurred: {e}")  # Debugging line
 
 
 def is_directory(ftp_server, name):
