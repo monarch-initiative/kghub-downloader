@@ -350,23 +350,17 @@ def parse_url(url: str):
 #         print(f"Permission denied: {e}")
 
 
-def download_file(ftp_connection_details, item, local_dir):
-    """Download a single file using an existing FTP connection."""
-    ftp, current_dir = ftp_connection_details
-    local_filepath = os.path.join(local_dir, item)
-    os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-    with open(local_filepath, "wb") as f:
-        ftp.retrbinary(f"RETR {item}", f.write)
+def download_file(ftp_details, item, local_dir):
+    """Download a single file from the FTP server."""
+    ftp_server, current_dir = ftp_details
+    with FTP(ftp_server) as ftp:
+        ftp.login(*get_credentials())
+        ftp.cwd(current_dir)
+        local_filepath = os.path.join(local_dir, item)
+        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+        with open(local_filepath, "wb") as f:
+            ftp.retrbinary(f"RETR {item}", f.write)
 
-def worker_init(ftp_server_host):
-    """Initialize FTP connection for the worker process."""
-    ftp = FTP(ftp_server_host)
-    ftp.login(*get_credentials())
-    return ftp
-
-def worker_finalize(ftp):
-    """Finalize FTP connection for the worker process."""
-    ftp.quit()
 
 def download_via_ftp(
     ftp_server_host: str,
@@ -376,17 +370,19 @@ def download_via_ftp(
 ):
     """Recursively download files from an FTP server matching the glob pattern using multiprocessing."""
     try:
-        # Create a pool of worker processes, initializing FTP connection for each worker
-        with Pool(processes=os.cpu_count(), initializer=worker_init, initargs=(ftp_server_host,)) as pool:
-            ftp = worker_init(ftp_server_host)  # Initialize FTP connection for the main process
-            ftp.cwd(dir_path)
-            items = ftp.nlst()
-            ftp.quit()  # Finalize FTP connection for the main process
+        ftp = FTP(ftp_server_host)
+        ftp.login(*get_credentials())
+        ftp.cwd(dir_path)
+        items = ftp.nlst()
+        # print(f"Items in {dir_path}: {items}")  # ! Debugging line
+        ftp.quit()
 
-            results = []
+        # Create a pool of worker processes
+        with Pool(processes=os.cpu_count()) as pool:
             for item in items:
                 item_path = os.path.join(dir_path, item)
                 if is_directory(ftp_server_host, item_path):
+                    # print(f"Found directory: {item_path}")  # ! Debugging line
                     # Recursively download from the found directory
                     download_via_ftp(
                         ftp_server_host,
@@ -397,23 +393,19 @@ def download_via_ftp(
                 else:
                     # Check if the file matches the pattern
                     if is_matching_filename(item, glob_pattern):
+                        # print(f"Downloading file: {item}")  # ! Debugging line
                         # Download the file using a worker process
-                        result = pool.apply_async(
+                        pool.apply_async(
                             download_file,
-                            args=((ftp, dir_path), item, local_dir),
+                            args=((ftp_server_host, dir_path), item, local_dir),
                         )
-                        results.append(result)
 
             # Close the pool and wait for all tasks to complete
             pool.close()
             pool.join()
 
-            # Retrieve results (if any exception occurred, it will be raised here)
-            for result in results:
-                result.get()
-
     except error_perm as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred: {e}")  # Debugging line
 
 
 def is_directory(ftp_url:str, name:str):
