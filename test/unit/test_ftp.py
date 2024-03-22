@@ -1,10 +1,11 @@
 import os
 import shutil
 import unittest
+from ftplib import FTP
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from kghub_downloader.download_utils import (download_file, download_via_ftp,
-                                             is_directory,
+from kghub_downloader.download_utils import (download_via_ftp,
                                              is_matching_filename)
 
 
@@ -87,7 +88,7 @@ class TestFTPDownload(unittest.TestCase):
     #     output_dir = pwd / "test/output"
     #     resources_dir = pwd / "test/resources"
     #     # Set up a real FTP server
-    #     ftp = ftplib.FTP("ftp.dlptest.com")
+    #     ftp = FTP("ftp.dlptest.com")
     #     ftp.login(os.environ["FTP_USERNAME"], os.environ["FTP_PASSWORD"])
     #     # upload the file ../resources/test_file.txt to the server
     #     ftp.storbinary(
@@ -100,13 +101,13 @@ class TestFTPDownload(unittest.TestCase):
     #     empty_directory(output_dir)
 
 
-def empty_directory(directory):
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
+# def empty_directory(directory):
+#     for filename in os.listdir(directory):
+#         file_path = os.path.join(directory, filename)
+#         try:
+#             if os.path.isfile(file_path) or os.path.islink(file_path):
+#                 os.unlink(file_path)
+#             elif os.path.isdir(file_path):
+#                 shutil.rmtree(file_path)
+#         except Exception as e:
+#             print(f"Failed to delete {file_path}. Reason: {e}")

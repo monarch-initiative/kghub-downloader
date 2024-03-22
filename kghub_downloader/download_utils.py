@@ -89,7 +89,7 @@ def download_from_yaml(
                 )
                 if not os.path.exists(local_file_dir):
                     logging.info(f"Creating local directory {local_file_dir}")
-                    pathlib.Path(local_file_dir).mkdir(parents=True, exist_ok=True)
+                    Path(local_file_dir).mkdir(parents=True, exist_ok=True)
 
             if os.path.exists(outfile):
                 if ignore_cache:
