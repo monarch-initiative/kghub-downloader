@@ -1,4 +1,3 @@
-import ftplib
 import json
 import logging
 import os
@@ -408,7 +407,7 @@ def download_via_ftp(
         print(f"An error occurred: {e}")  # Debugging line
 
 
-def is_directory(ftp_url:str, name:str):
+def is_directory(ftp_url: str, name: str):
     """Check if the given name is a directory on the FTP server."""
     ftp_server = FTP(ftp_url)
     ftp_server.login(*get_credentials())
@@ -425,6 +424,7 @@ def is_directory(ftp_url:str, name:str):
 def is_matching_filename(filename, glob_pattern):
     """Check if the filename matches the glob pattern."""
     return fnmatch(filename, glob_pattern) if glob_pattern else True
+
 
 def get_credentials(type: str = "ftp"):
     """Get credentials from environment variables."""
