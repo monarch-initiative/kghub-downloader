@@ -6,6 +6,11 @@
 
 This is a configuration based file caching downloader with initial support for http requests & queries against elasticsearch.
 
+### Requirements
+
+- Python 3.10+
+- [Poetry](https://python-poetry.org/)
+
 ### Installation
 
 KGHub Downloader is available to install via pip:
