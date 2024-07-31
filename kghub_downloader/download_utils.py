@@ -7,6 +7,7 @@ import re
 from fnmatch import fnmatch
 from ftplib import error_perm
 from multiprocessing.sharedctypes import Value
+import sys
 from typing import List, Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -16,6 +17,7 @@ import compress_json  # type: ignore
 import elasticsearch
 import elasticsearch.helpers
 import gdown
+import requests
 import yaml
 from botocore.exceptions import NoCredentialsError
 from google.cloud import storage
@@ -146,6 +148,61 @@ def download_from_yaml(
                     else:
                         # If the loop completes without breaking (i.e., no match found), throw an error
                         raise ValueError("Invalid URL")
+                elif url.startswith("git://"):
+                    url_split = url.split("/")
+                    repo_owner = url_split[-3]
+                    repo_name = url_split[-2]
+                    asset_name = url_split[-1]
+                    asset_url = None
+                    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases"
+                    # Get the list of releases
+                    response = requests.get(api_url)
+                    response.raise_for_status()
+                    releases = response.json()
+
+                    if not releases:
+                        print("No releases found for this repository.")
+                        sys.exit(1)
+
+                    # Check if a specific tag is provided
+                    if "tag" in item:
+                        # Find the release with the specified tag
+                        tagged_release = next(
+                            (
+                                release
+                                for release in releases
+                                if release["tag_name"] == item["tag"]
+                            ),
+                            None,
+                        )
+                        if tagged_release:
+                            for asset in tagged_release.get("assets", []):
+                                if asset["name"] == asset_name:
+                                    asset_url = asset["browser_download_url"]
+                                    break
+
+                    # If no asset found in the specified tag or no tag provided, check other releases
+                    if not asset_url:
+                        for release in releases:
+                            for asset in release.get("assets", []):
+                                if asset["name"] == asset_name:
+                                    asset_url = asset["browser_download_url"]
+                                    break
+                            if asset_url:
+                                break
+
+                    if not asset_url:
+                        print(f"Asset '{asset_name}' not found in any release.")
+                        sys.exit(1)
+
+                    # Download the asset
+                    response = requests.get(asset_url, stream=True)
+                    response.raise_for_status()
+                    with open(outfile, "wb") as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            file.write(chunk)
+                    print(f"Downloaded {asset_name}")
+
                 else:
                     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
                     try:
@@ -322,7 +379,9 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         items = ftp_server.nlst()
 
         # Initialize tqdm progress bar
-        with tqdm(total=len(items), desc=f"Downloading from {current_dir} via ftp") as pbar:
+        with tqdm(
+            total=len(items), desc=f"Downloading from {current_dir} via ftp"
+        ) as pbar:
             for item in items:
                 # Check if the item is a directory
                 if is_directory(ftp_server, item):

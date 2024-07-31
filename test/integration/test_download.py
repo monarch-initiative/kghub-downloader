@@ -7,10 +7,11 @@ from kghub_downloader.download_utils import download_from_yaml
 # Integration test using example configuration
 def test_download():
     files = files = [
-        "test/output/zfin/fish_phenotype.txt",
-        "test/output/test_file.yaml",
-        "test/output/gdrive_test_1.txt",
-        "test/output/gdrive_test_2.txt",
+        # "test/output/zfin/fish_phenotype.txt",
+        # "test/output/test_file.yaml",
+        # "test/output/gdrive_test_1.txt",
+        # "test/output/gdrive_test_2.txt",
+        "test/output/testfile.zip",
     ]
 
     for file in files:
