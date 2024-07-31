@@ -11,6 +11,7 @@ def test_download():
         "test/output/test_file.yaml",
         "test/output/gdrive_test_1.txt",
         "test/output/gdrive_test_2.txt",
+        "test/output/testfile.zip",
     ]
 
     for file in files:

@@ -15,6 +15,10 @@
 - url: s3://monarch-kg-test/kghub_downloader_test_file.yaml
   local_name: test_file.yaml
 
+- url: git://Knowledge-Graph-Hub/kg-microbe/testfile.zip
+  tag: v0.0.1
+  local_name: testfile.zip
+
 # - url: https://www.ebi.ac.uk/chembl/elk/es/
 #   api: elasticsearch
 #   query_file: example/query.json

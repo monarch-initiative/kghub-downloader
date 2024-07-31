@@ -28,6 +28,7 @@ Available options are:
   - Google Cloud Storage (`gs://`)
   - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
   - Amazon AWS S3 bucket (`s3://`)
+  - GitHub Release Assets (`git://RepositoryOwner/RepositoryName`)
 - **local_name**: The name to save the file as locally
 - **tag**: A tag to use to filter downloads
 - **api**: The API to use to download the file. Currently supported: `elasticsearch`
