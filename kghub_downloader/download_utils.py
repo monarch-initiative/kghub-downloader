@@ -206,14 +206,15 @@ def download_from_yaml(
                 else:
                     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
                     try:
-                        with urlopen(req) as response, open(outfile, "wb") as out_file:  # type: ignore
+                        with urlopen(req) as response:  # type: ignore
                             if snippet_only:
                                 data = response.read(
                                     5120
                                 )  # first 5 kB of a `bytes` object
                             else:
                                 data = response.read()  # a `bytes` object
-                            out_file.write(data)
+                            with open(outfile, "wb") as out_file:
+                                out_file.write(data)
                             if snippet_only:  # Need to clean up the outfile
                                 in_file = open(outfile, "r+")
                                 in_lines = in_file.read()
