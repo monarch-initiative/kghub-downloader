@@ -214,18 +214,19 @@ def download_from_yaml(
                             )  # first 5 kB of a `bytes` object
                         else:
                             data = response.read()  # a `bytes` object
-                        with open(outfile, "wb") as out_file:
-                            out_file.write(data)
-                        if snippet_only:  # Need to clean up the outfile
-                            in_file = open(outfile, "r+")
-                            in_lines = in_file.read()
-                            in_file.close()
-                            splitlines = in_lines.split("\n")
-                            outstring = "\n".join(splitlines[:-1])
-                            cleanfile = open(outfile, "w+")
-                            for i in range(len(outstring)):
-                                cleanfile.write(outstring[i])
-                            cleanfile.close()
+
+                    with open(outfile, "wb") as out_file:
+                        out_file.write(data)
+                    if snippet_only:  # Need to clean up the outfile
+                        in_file = open(outfile, "r+")
+                        in_lines = in_file.read()
+                        in_file.close()
+                        splitlines = in_lines.split("\n")
+                        outstring = "\n".join(splitlines[:-1])
+                        cleanfile = open(outfile, "w+")
+                        for i in range(len(outstring)):
+                            cleanfile.write(outstring[i])
+                        cleanfile.close()
                 except URLError:
                     logging.error(f"Failed to download: {url}")
                     raise
