@@ -310,11 +310,11 @@ def download_from_api(yaml_item, outfile) -> None:
         query_data = compress_json.local_load(
             os.path.join(os.getcwd(), yaml_item["query_file"])
         )
-        output = open(outfile, "w")
         records = elastic_search_query(
             es_conn, index=yaml_item["index"], query=query_data
         )
-        json.dump(records, output)
+        with open(outfile, "w") as output:
+            json.dump(records, output)
         return None
     else:
         raise RuntimeError(f"API {yaml_item['api']} not supported")
