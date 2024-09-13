@@ -29,6 +29,8 @@ Available options are:
   - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
   - Amazon AWS S3 bucket (`s3://`)
   - GitHub Release Assets (`git://RepositoryOwner/RepositoryName`)
+
+  If the URL includes a name in `{CURLY_BRACES}`, it will be expanded from environment variables.
 - **local_name**: The name to save the file as locally
 - **tag**: A tag to use to filter downloads
 - **api**: The API to use to download the file. Currently supported: `elasticsearch`
