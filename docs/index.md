@@ -31,6 +31,7 @@ Available options are:
   - GitHub Release Assets (`git://RepositoryOwner/RepositoryName`)
 
   If the URL includes a name in `{CURLY_BRACES}`, it will be expanded from environment variables.
+- **glob**: An optional glob pattern to limit downloading files (FTP only)
 - **local_name**: The name to save the file as locally
 - **tag**: A tag to use to filter downloads
 - **api**: The API to use to download the file. Currently supported: `elasticsearch`
