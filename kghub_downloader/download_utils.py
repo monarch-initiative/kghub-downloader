@@ -8,7 +8,6 @@ from typing import List, Optional
 import compress_json  # type: ignore
 import elasticsearch
 import elasticsearch.helpers
-import gdown
 import yaml
 from tqdm.auto import tqdm  # type: ignore
 
@@ -16,8 +15,6 @@ from kghub_downloader.model import DownloadableResource
 from kghub_downloader import download, upload
 
 # from compress_json import compress_json
-
-GDOWN_MAP = {"gdrive": "https://drive.google.com/uc?id="}
 
 
 def download_from_yaml(
@@ -94,25 +91,8 @@ def download_from_yaml(
                 download.s3(item, outfile_path)
             elif url.startswith("ftp"):
                 download.ftp(item, outfile_path)
-            elif any(
-                url.startswith(str(i))
-                for i in list(GDOWN_MAP.keys()) + list(GDOWN_MAP.values())
-            ):
-                # Check if url starts with a key or a value
-                for key, value in GDOWN_MAP.items():
-                    if url.startswith(str(value)):
-                        # If value, then download the file directly
-                        gdown.download(url, output=outfile_path.name)
-                        break
-                    elif url.startswith(str(key)):
-                        # If key, replace key by value and then download
-                        new_url = url.replace(str(key) + ":", str(value))
-                        gdown.download(new_url, output=outfile_path.name)
-                        break
-                else:
-                    # If the loop completes without breaking (i.e., no match
-                    # found), throw an error
-                    raise ValueError("Invalid URL")
+            elif url.startswith("gdrive:"):
+                download.google_drive(item, outfile_path)
             elif url.startswith("git://"):
                 download.git(item, outfile_path)
             else:

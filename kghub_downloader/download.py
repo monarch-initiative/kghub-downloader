@@ -8,6 +8,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 import boto3
+import gdown
 import requests
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
@@ -16,12 +17,23 @@ from tqdm.auto import tqdm  # type: ignore
 from kghub_downloader.model import DownloadableResource
 
 
+GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
+
+
 def google_cloud_storage(item: DownloadableResource,
                          outfile_path: Path) -> None:
     url = item.expanded_url
     Blob.from_string(
         url, client=storage.Client()
     ).download_to_filename(outfile_path.name)
+
+
+def google_drive(item: DownloadableResource,
+                 outfile_path: Path) -> None:
+    url = item.expanded_url
+    if url.startswith("gdrive:"):
+        url = GOOGLE_DRIVE_PREFIX + url[7:]
+    gdown.download(url, output=outfile_path.name)
 
 
 def s3(item: DownloadableResource, outfile_path: Path) -> None:
@@ -106,6 +118,10 @@ def git(item: DownloadableResource, outfile_path: Path) -> None:
 def http(item: DownloadableResource, outfile_path: Path,
          snippet_only: bool) -> None:
     url = item.expanded_url
+
+    if url.startswith(GOOGLE_DRIVE_PREFIX):
+        return google_drive(item, outfile_path)
+
     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
         with urlopen(req) as response:  # type: ignore
