@@ -5,7 +5,7 @@ from ftplib import error_perm
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from kghub_downloader.download_utils import (
+from kghub_downloader.download import (
     download_via_ftp,
     is_directory,
     is_matching_filename,
@@ -30,7 +30,7 @@ class TestFTPDownload(unittest.TestCase):
 
         # Mock is_directory to return True for directories and False for files
         with patch(
-            "kghub_downloader.download_utils.is_directory",
+            "kghub_downloader.download.is_directory",
             side_effect=lambda ftp, name: name == "dir1",
         ):
             # Mock os.makedirs to prevent actual directory creation

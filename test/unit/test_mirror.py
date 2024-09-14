@@ -5,7 +5,7 @@ import boto3
 import moto
 import pytest
 
-from kghub_downloader.download_utils import mirror_to_bucket
+from kghub_downloader.upload import mirror_to_bucket
 
 
 # proper test
