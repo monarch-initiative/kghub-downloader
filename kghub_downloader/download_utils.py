@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import pathlib
-import re
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -159,17 +158,3 @@ def elastic_search_query(
         records.append(item)
 
     return records
-
-
-def parse_url(url: str):
-    """Parses a URL for any environment variables enclosed in {curly braces}"""
-    pattern = r".*?\{(.*?)\}"
-    match = re.findall(pattern, url)
-    for i in match:
-        secret = os.getenv(i)
-        if secret is None:
-            raise ValueError(
-                f"Environment Variable: {i} is not set. Please set the"
-                "variable using export or similar, and try again.")
-        url = url.replace("{" + i + "}", secret)
-    return url
