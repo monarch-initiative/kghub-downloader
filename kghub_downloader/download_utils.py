@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import compress_json  # type: ignore
 import elasticsearch
@@ -12,7 +13,7 @@ import yaml
 from tqdm.auto import tqdm  # type: ignore
 
 from kghub_downloader.model import DownloadableResource
-from kghub_downloader import download, upload
+from kghub_downloader import upload, schemas
 
 # from compress_json import compress_json
 
@@ -21,7 +22,7 @@ def download_from_yaml(
     yaml_file: str,
     output_dir: str,
     ignore_cache: Optional[bool] = False,
-    snippet_only: Optional[bool] = False,
+    snippet_only: bool = False,
     tags: Optional[List] = None,
     mirror: Optional[str] = None,
 ) -> None:
@@ -82,21 +83,14 @@ def download_from_yaml(
             download_from_api(item, outfile_path.name)
             continue
 
-        # Can remove this if block, but I will do it in a further commit for a
-        # clean diff
-        if url:
-            if url.startswith("gs://"):
-                download.google_cloud_storage(item, outfile_path)
-            elif url.startswith("s3://"):
-                download.s3(item, outfile_path)
-            elif url.startswith("ftp"):
-                download.ftp(item, outfile_path)
-            elif url.startswith("gdrive:"):
-                download.google_drive(item, outfile_path)
-            elif url.startswith("git://"):
-                download.git(item, outfile_path)
-            else:
-                download.http(item, outfile_path, snippet_only)
+        schema = urlparse(item.expanded_url)
+
+        download_fn = schemas.available_schemas.get(schema.scheme, None)
+
+        if download_fn is None:
+            raise ValueError(f"Invalid URL schema for url {item.expanded_url}")
+
+        download_fn(item, outfile_path, snippet_only)
 
         # If mirror, upload to remote storage
         if mirror:

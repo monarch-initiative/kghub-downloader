@@ -15,28 +15,33 @@ from google.cloud.storage.blob import Blob
 from tqdm.auto import tqdm  # type: ignore
 
 from kghub_downloader.model import DownloadableResource
+from kghub_downloader.schemas import register_schema
 
 
 GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 
 
+@register_schema("gs")
 def google_cloud_storage(item: DownloadableResource,
-                         outfile_path: Path) -> None:
+                         outfile_path: Path, snippet_only: bool) -> None:
     url = item.expanded_url
     Blob.from_string(
         url, client=storage.Client()
     ).download_to_filename(outfile_path.name)
 
 
+@register_schema("gdrive")
 def google_drive(item: DownloadableResource,
-                 outfile_path: Path) -> None:
+                 outfile_path: Path, snippet_only: bool) -> None:
     url = item.expanded_url
     if url.startswith("gdrive:"):
         url = GOOGLE_DRIVE_PREFIX + url[7:]
     gdown.download(url, output=outfile_path.name)
 
 
-def s3(item: DownloadableResource, outfile_path: Path) -> None:
+@register_schema("s3")
+def s3(item: DownloadableResource, outfile_path: Path,
+       snippet_only: bool) -> None:
     url = item.expanded_url
     s3 = boto3.client("s3")
     bucket_name = url.split("/")[2]
@@ -44,7 +49,9 @@ def s3(item: DownloadableResource, outfile_path: Path) -> None:
     s3.download_file(bucket_name, remote_file, outfile_path.name)
 
 
-def ftp(item: DownloadableResource, outfile_path: Path) -> None:
+@register_schema("ftp")
+def ftp(item: DownloadableResource, outfile_path: Path,
+        snippet_only: bool) -> None:
     url = item.expanded_url
     ftp_username = os.getenv("FTP_USERNAME", None)
     ftp_password = os.getenv("FTP_PASSWORD", None)
@@ -55,7 +62,9 @@ def ftp(item: DownloadableResource, outfile_path: Path) -> None:
     download_via_ftp(ftp, path, outfile_path.name, item.glob)
 
 
-def git(item: DownloadableResource, outfile_path: Path) -> None:
+@register_schema("git")
+def git(item: DownloadableResource, outfile_path: Path,
+        snippet_only: bool) -> None:
     url = item.url
     url_split = url.split("/")
     repo_owner = url_split[-3]
@@ -115,12 +124,14 @@ def git(item: DownloadableResource, outfile_path: Path) -> None:
     print(f"Downloaded {asset_name}")
 
 
+@register_schema("http")
+@register_schema("https")
 def http(item: DownloadableResource, outfile_path: Path,
          snippet_only: bool) -> None:
     url = item.expanded_url
 
     if url.startswith(GOOGLE_DRIVE_PREFIX):
-        return google_drive(item, outfile_path)
+        return google_drive(item, outfile_path, snippet_only)
 
     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
