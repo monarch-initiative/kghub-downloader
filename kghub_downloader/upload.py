@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -6,7 +7,7 @@ from google.cloud import storage
 
 
 def mirror_to_bucket(local_file: Path, bucket_url: str,
-                     remote_file: Path) -> None:
+                     remote_file: Path) -> Optional[bool]:
     bucket_split = bucket_url.split("/")
     bucket_name = bucket_split[2]
     with open(local_file, "rb"):
