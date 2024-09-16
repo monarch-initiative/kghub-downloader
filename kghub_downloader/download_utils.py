@@ -72,7 +72,7 @@ def download_from_yaml(
         if outfile_path.exists():
             if ignore_cache:
                 logging.info(f"Deleting cached version of {outfile_path}")
-                outfile_path.remove()
+                outfile_path.unlink()
             else:
                 logging.info("Using cached version of {outfile_path")
                 continue
