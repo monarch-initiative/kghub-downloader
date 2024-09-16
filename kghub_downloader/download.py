@@ -53,12 +53,19 @@ def s3(item: DownloadableResource, outfile_path: Path,
 def ftp(item: DownloadableResource, outfile_path: Path,
         snippet_only: bool) -> None:
     url = item.expanded_url
+
     ftp_username = os.getenv("FTP_USERNAME", None)
-    ftp_password = os.getenv("FTP_PASSWORD", None)
+    ftp_password = os.getenv("FTP_PASSWORD", "")
+
     host = url.split("/")[0]
     path = "/".join(url.split("/")[1:])
     ftp = ftplib.FTP(host)
-    ftp.login(ftp_username, ftp_password)
+
+    if ftp_username is None:
+        ftp.login()
+    else:
+        ftp.login(ftp_username, ftp_password)
+
     download_via_ftp(ftp, path, outfile_path.name, item.glob)
 
 
