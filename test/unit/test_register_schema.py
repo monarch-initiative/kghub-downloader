@@ -1,14 +1,14 @@
 import unittest
 from pathlib import Path
 
-from kghub_downloader import schemas, model
+from kghub_downloader import schemes, model
 
 
-class TestSchemaRegister(unittest.TestCase):
-    def test_register_schema(self):
+class TestSchemeRegister(unittest.TestCase):
+    def test_register_scheme(self):
         registry = {}
 
-        @schemas.register_schema("ex", registry)
+        @schemes.register_scheme("ex", registry)
         def downloader(
             item: model.DownloadableResource,
             path: Path,

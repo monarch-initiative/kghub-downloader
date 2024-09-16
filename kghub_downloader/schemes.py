@@ -12,18 +12,18 @@ ResourceDownloadFunction = Callable[
 
 ResourceDownloadRegistry = Dict[str, ResourceDownloadFunction]
 
-available_schemas: ResourceDownloadRegistry = {}
+available_schemes: ResourceDownloadRegistry = {}
 
 
-def register_schema(
+def register_scheme(
     name: str,
     registry: Optional[ResourceDownloadRegistry] = None
 ) -> Callable[[ResourceDownloadFunction], ResourceDownloadFunction]:
     # Use global registry if no dictionary is pass as an argument
     if registry is None:
-        registry = available_schemas
+        registry = available_schemes
 
-    def with_added_schema(fn: ResourceDownloadFunction):
+    def with_added_scheme(fn: ResourceDownloadFunction):
         registry[name] = fn
         return fn
-    return with_added_schema
+    return with_added_scheme

@@ -42,7 +42,7 @@ class TestYAMLValidate(unittest.TestCase):
     def test_invalid_url(self):
         with self.assertRaises(ValidationError):
             DownloadableResource(
-                url="illegal-schema://example.com/",
+                url="illegal-scheme://example.com/",
                 tag="tag",
                 local_name="local_name",
             )

@@ -5,7 +5,7 @@ from typing import Optional, Literal, Union
 
 from pydantic import BaseModel, Field, FilePath
 
-valid_url_schemas = [
+valid_url_schemes = [
     "http",
     "gs",
     "gdrive",  # FIXME: document
@@ -17,7 +17,7 @@ valid_url_schemas = [
 
 class DownloadableResource(BaseModel):
     url: str = Field(
-        pattern=r"^" + '|'.join(valid_url_schemas)
+        pattern=r"^" + '|'.join(valid_url_schemes)
     )
     api: Optional[Union[Literal['elasticsearch']]] = None
     tag: Optional[str] = None

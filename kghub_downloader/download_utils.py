@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import yaml
 from tqdm.auto import tqdm  # type: ignore
 
-from kghub_downloader import upload, schemas
+from kghub_downloader import upload, schemes
 from kghub_downloader.elasticsearch import download_from_elastic_search
 from kghub_downloader.model import DownloadableResource
 
@@ -81,8 +81,8 @@ def download_from_yaml(
                 raise RuntimeError(f"API {item.api} not supported")
             continue
 
-        schema = urlparse(item.expanded_url)
-        download_fn = schemas.available_schemas.get(schema.scheme, None)
+        parsed_url = urlparse(item.expanded_url)
+        download_fn = schemes.available_schemes.get(parsed_url.scheme, None)
 
         if download_fn is None:
             raise ValueError(f"Invalid URL schema for url {item.expanded_url}")

@@ -15,13 +15,13 @@ from google.cloud.storage.blob import Blob
 from tqdm.auto import tqdm  # type: ignore
 
 from kghub_downloader.model import DownloadableResource
-from kghub_downloader.schemas import register_schema
+from kghub_downloader.schemes import register_scheme
 
 
 GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 
 
-@register_schema("gs")
+@register_scheme("gs")
 def google_cloud_storage(item: DownloadableResource,
                          outfile_path: Path, snippet_only: bool) -> None:
     url = item.expanded_url
@@ -30,7 +30,7 @@ def google_cloud_storage(item: DownloadableResource,
     ).download_to_filename(outfile_path.name)
 
 
-@register_schema("gdrive")
+@register_scheme("gdrive")
 def google_drive(item: DownloadableResource,
                  outfile_path: Path, snippet_only: bool) -> None:
     url = item.expanded_url
@@ -39,7 +39,7 @@ def google_drive(item: DownloadableResource,
     gdown.download(url, output=outfile_path.name)
 
 
-@register_schema("s3")
+@register_scheme("s3")
 def s3(item: DownloadableResource, outfile_path: Path,
        snippet_only: bool) -> None:
     url = item.expanded_url
@@ -49,7 +49,7 @@ def s3(item: DownloadableResource, outfile_path: Path,
     s3.download_file(bucket_name, remote_file, outfile_path.name)
 
 
-@register_schema("ftp")
+@register_scheme("ftp")
 def ftp(item: DownloadableResource, outfile_path: Path,
         snippet_only: bool) -> None:
     url = item.expanded_url
@@ -69,7 +69,7 @@ def ftp(item: DownloadableResource, outfile_path: Path,
     download_via_ftp(ftp, path, outfile_path.name, item.glob)
 
 
-@register_schema("git")
+@register_scheme("git")
 def git(item: DownloadableResource, outfile_path: Path,
         snippet_only: bool) -> None:
     url = item.url
@@ -131,8 +131,8 @@ def git(item: DownloadableResource, outfile_path: Path,
     print(f"Downloaded {asset_name}")
 
 
-@register_schema("http")
-@register_schema("https")
+@register_scheme("http")
+@register_scheme("https")
 def http(item: DownloadableResource, outfile_path: Path,
          snippet_only: bool) -> None:
     url = item.expanded_url
