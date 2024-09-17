@@ -75,7 +75,7 @@ def download_from_yaml(
         # Download file
         if item.api is not None:
             if item.api == "elasticsearch":
-                download_from_elastic_search(item, outfile_path.name)
+                download_from_elastic_search(item, str(outfile_path))
             else:
                 raise RuntimeError(f"API {item.api} not supported")
             continue

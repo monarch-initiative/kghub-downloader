@@ -38,7 +38,7 @@ GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 def google_cloud_storage(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from Google Cloud Storage."""
     url = item.expanded_url
-    Blob.from_string(url, client=storage.Client()).download_to_filename(outfile_path.name)
+    Blob.from_string(url, client=storage.Client()).download_to_filename(str(outfile_path))
 
 
 @register_scheme("gdrive")
@@ -47,7 +47,7 @@ def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: b
     url = item.expanded_url
     if url.startswith("gdrive:"):
         url = GOOGLE_DRIVE_PREFIX + url[7:]
-    gdown.download(url, output=outfile_path.name)
+    gdown.download(url, output=str(outfile_path))
 
 
 @register_scheme("s3")
@@ -57,7 +57,7 @@ def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> No
     s3 = boto3.client("s3")
     bucket_name = url.split("/")[2]
     remote_file = "/".join(url.split("/")[3:])
-    s3.download_file(bucket_name, remote_file, outfile_path.name)
+    s3.download_file(bucket_name, remote_file, str(outfile_path))
 
 
 @register_scheme("ftp")
@@ -78,7 +78,7 @@ def ftp(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
     else:
         ftp.login(ftp_username, ftp_password)
 
-    download_via_ftp(ftp, path, outfile_path.name, item.glob)
+    download_via_ftp(ftp, path, str(outfile_path), item.glob)
 
 
 @register_scheme("git")
@@ -133,7 +133,7 @@ def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
     # Download the asset
     response = requests.get(asset_url, stream=True, timeout=10)
     response.raise_for_status()
-    with open(outfile_path.name, "wb") as file:
+    with open(str(outfile_path), "wb") as file:
         for chunk in response.iter_content(chunk_size=8192):
             file.write(chunk)
     print(f"Downloaded {asset_name}")
@@ -156,15 +156,15 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
             else:
                 data = response.read()  # a `bytes` object
 
-        with open(outfile_path.name, "wb") as out_file:
+        with open(str(outfile_path), "wb") as out_file:
             out_file.write(data)
         if snippet_only:  # Need to clean up the outfile
-            in_file = open(outfile_path.name, "r+")
+            in_file = open(str(outfile_path), "r+")
             in_lines = in_file.read()
             in_file.close()
             splitlines = in_lines.split("\n")
             outstring = "\n".join(splitlines[:-1])
-            cleanfile = open(outfile_path.name, "w+")
+            cleanfile = open(str(outfile_path), "w+")
             for i in range(len(outstring)):
                 cleanfile.write(outstring[i])
             cleanfile.close()
