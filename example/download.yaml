@@ -3,7 +3,7 @@
   local_name: zfin/fish_phenotype.txt
 
 - url: gs://monarch-test/kghub_downloader_test_file.yaml
-  local_name: test_file.yaml
+  local_name: google_storage_test.yaml
 
 - url: gdrive:10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
   local_name: gdrive_test_1.txt
@@ -13,11 +13,11 @@
   local_name: gdrive_test_2.txt
 
 - url: s3://monarch-kg-test/kghub_downloader_test_file.yaml
-  local_name: test_file.yaml
+  local_name: s3_test.yaml
 
 - url: git://Knowledge-Graph-Hub/kg-microbe/testfile.zip
   tag: v0.0.1
-  local_name: testfile.zip
+  local_name: git_test.zip
 
 # - url: https://www.ebi.ac.uk/chembl/elk/es/
 #   api: elasticsearch
@@ -25,4 +25,3 @@
 #   local_name: molecule.json
 #   index: chembl_28_molecule
 #   tag: ebi
-  
