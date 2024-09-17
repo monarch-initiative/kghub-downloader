@@ -85,7 +85,7 @@ def download_from_yaml(
         download_fn = schemes.available_schemes.get(parsed_url.scheme, None)
 
         if download_fn is None:
-            raise ValueError(f"Invalid URL schema for url {item.expanded_url}")
+            raise ValueError(f"Invalid URL scheme for url {item.expanded_url}")
 
         download_fn(item, outfile_path, snippet_only)
 
