@@ -1,7 +1,6 @@
 import ftplib
 import os
 import unittest
-from ftplib import error_perm
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -36,9 +35,7 @@ class TestFTPDownload(unittest.TestCase):
             # Mock os.makedirs to prevent actual directory creation
             with patch("os.makedirs") as makedirs_mock:
                 # Mock open to prevent actual file writing
-                with patch(
-                    "builtins.open", new_callable=unittest.mock.mock_open()
-                ) as mock_file:
+                with patch("builtins.open", new_callable=unittest.mock.mock_open()) as mock_file:
                     # Call the function to be tested
                     download_via_ftp(ftp_instance, "/", "local_dir", "*.txt")
 
@@ -71,9 +68,7 @@ class TestFTPDownload(unittest.TestCase):
         # Test with no pattern provided (should always return True)
         self.assertTrue(is_matching_filename("file.jpg", None))
 
-    @unittest.skipIf(
-        os.getenv("GITHUB_ACTIONS") == "true", "This test needs credentials to run."
-    )
+    @unittest.skipIf(os.getenv("GITHUB_ACTIONS") == "true", "This test needs credentials to run.")
     def test_actual_upload_download(self):
         # Credentials available at: https://dlptest.com/ftp-test/
         pwd = Path.cwd()
@@ -83,9 +78,7 @@ class TestFTPDownload(unittest.TestCase):
         ftp = ftplib.FTP("ftp.dlptest.com")
         ftp.login(os.environ["FTP_USERNAME"], os.environ["FTP_PASSWORD"])
         # upload the file ../resources/test_file.txt to the server
-        ftp.storbinary(
-            "STOR test_file.txt", open(f"{resources_dir}/testfile.txt", "rb")
-        )
+        ftp.storbinary("STOR test_file.txt", open(f"{resources_dir}/testfile.txt", "rb"))
         # download the file test_file.txt from the server
         download_via_ftp(ftp, "/", f"{output_dir}", "*.txt")
         # Check that the file was downloaded correctly

@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from kghub_downloader import schemes, model
+from kghub_downloader import model, schemes
 
 
 class TestSchemeRegister(unittest.TestCase):
@@ -9,11 +9,7 @@ class TestSchemeRegister(unittest.TestCase):
         registry = {}
 
         @schemes.register_scheme("ex", registry)
-        def downloader(
-            item: model.DownloadableResource,
-            path: Path,
-            snippet_only: bool
-        ) -> None:
+        def downloader(item: model.DownloadableResource, path: Path, snippet_only: bool) -> None:
             return
 
         self.assertEqual(list(registry.keys()), ["ex"])

@@ -22,14 +22,10 @@ class TestYAMLValidate(unittest.TestCase):
                 tag="tag",
                 local_name="local_name",
             )
-            self.assertEqual(resource.expanded_url,
-                             "http://example.com/expanded")
+            self.assertEqual(resource.expanded_url, "http://example.com/expanded")
 
     def test_invalid_url_expansion(self):
-        with (
-            patch.dict("os.environ", clear=True) as environ,
-            self.assertRaises(ValueError)
-        ):
+        with patch.dict("os.environ", clear=True) as environ, self.assertRaises(ValueError):
             if "ENVVAR" in environ:
                 del environ["ENVVAR"]
             resource = DownloadableResource(

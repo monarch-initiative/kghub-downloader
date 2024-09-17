@@ -1,3 +1,5 @@
+"""The main functionality for downloading resources, as defined by the class in model.py."""
+
 import logging
 import pathlib
 from typing import List, Optional
@@ -6,7 +8,7 @@ from urllib.parse import urlparse
 import yaml
 from tqdm.auto import tqdm  # type: ignore
 
-from kghub_downloader import upload, schemes
+from kghub_downloader import schemes, upload
 from kghub_downloader.elasticsearch import download_from_elastic_search
 from kghub_downloader.model import DownloadableResource
 
@@ -21,7 +23,8 @@ def download_from_yaml(
     tags: Optional[List] = None,
     mirror: Optional[str] = None,
 ) -> None:
-    """Download files listed in a download.yaml file
+    """
+    Download files listed in a download.yaml file.
 
     Args:
         yaml_file: A string pointing to the download.yaml file, to be parsed for things to download.
@@ -32,16 +35,14 @@ def download_from_yaml(
         mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
     Returns:
         None.
-    """
 
+    """
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     with open(yaml_file) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
 
-    resources: List[DownloadableResource] = [
-        DownloadableResource(**x) for x in data
-    ]
+    resources: List[DownloadableResource] = [DownloadableResource(**x) for x in data]
 
     # Limit to only tagged downloads, if tags are passed in
     if tags:
@@ -56,9 +57,7 @@ def download_from_yaml(
 
         # Can't truncate compressed file
         if snippet_only and item.is_compressed_file:
-            logging.error(
-                "Asked to download snippets; can't snippet {}".format(item)
-            )
+            logging.error("Asked to download snippets; can't snippet {}".format(item))
             continue
 
         if not outfile_dir.exists():

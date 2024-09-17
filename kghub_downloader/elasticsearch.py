@@ -1,3 +1,5 @@
+"""Code for downloading resources via Elasticsearch."""
+
 import json
 import os
 
@@ -9,34 +11,29 @@ from tqdm.auto import tqdm
 from kghub_downloader.model import DownloadableResource
 
 
-def download_from_elastic_search(yaml_item: DownloadableResource,
-                                 outfile: str) -> None:
+def download_from_elastic_search(yaml_item: DownloadableResource, outfile: str) -> None:
     """
+    Download a resource from Elasticsearch.
 
     Args:
         yaml_item: item to be download, parsed from yaml
         outfile: where to write out file
 
     Returns:
+        None
 
     """
     es_conn = elasticsearch.Elasticsearch(hosts=[yaml_item.url])
 
     if yaml_item.query_file is None:
-        raise ValueError("No elasticsearch query file was provided in item "
-                         "configuration")
+        raise ValueError("No elasticsearch query file was provided in item " "configuration")
 
     if yaml_item.index is None:
-        raise ValueError("No elasticsearch index was provided in item"
-                         "configuration")
+        raise ValueError("No elasticsearch index was provided in item" "configuration")
 
     # FIXME: Validate query file and index parameters exist
-    query_data = compress_json.local_load(
-        os.path.join(os.getcwd(), yaml_item.query_file)
-    )
-    records = elastic_search_query(
-        es_conn, index=yaml_item.index, query=query_data
-    )
+    query_data = compress_json.local_load(os.path.join(os.getcwd(), yaml_item.query_file))
+    records = elastic_search_query(es_conn, index=yaml_item.index, query=query_data)
 
     with open(outfile, "w") as output:
         json.dump(records, output)
@@ -52,7 +49,8 @@ def elastic_search_query(
     request_timeout: int = 60,
     preserve_order: bool = True,
 ):
-    """Fetch records from the given URL and query parameters.
+    """
+    Fetch records from the given URL and query parameters.
 
     Args:
         es_connection: elastic search connection
@@ -63,6 +61,7 @@ def elastic_search_query(
         preserve_order: preserve order param passed to elastic search
     Returns:
         All records for query
+
     """
     records = []
     results = elasticsearch.helpers.scan(

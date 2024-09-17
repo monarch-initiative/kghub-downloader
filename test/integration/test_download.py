@@ -33,9 +33,7 @@ def test_tag():
         if exists(file):
             os.remove(file)
 
-    download_from_yaml(
-        yaml_file="example/download.yaml", output_dir="test/output", tags=["testing"]
-    )
+    download_from_yaml(yaml_file="example/download.yaml", output_dir="test/output", tags=["testing"])
 
     for file in tagged_files:
         assert exists(file)

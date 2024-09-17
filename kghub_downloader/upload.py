@@ -1,13 +1,15 @@
+"""Functions for uploading resources to a mirror."""
+
 from pathlib import Path
 from typing import Optional
 
-import boto3
-from botocore.exceptions import NoCredentialsError
-from google.cloud import storage
+import boto3  # type: ignore
+from botocore.exceptions import NoCredentialsError  # type: ignore
+from google.cloud import storage  # type: ignore
 
 
-def mirror_to_bucket(local_file: Path, bucket_url: str,
-                     remote_file: Path) -> Optional[bool]:
+def mirror_to_bucket(local_file: Path, bucket_url: str, remote_file: Path) -> Optional[bool]:
+    """Mirror a local file to an S3 bucket."""
     bucket_split = bucket_url.split("/")
     bucket_name = bucket_split[2]
     with open(local_file, "rb"):
@@ -29,14 +31,9 @@ def mirror_to_bucket(local_file: Path, bucket_url: str,
             print(f"Bucket name: {bucket_name}")
             print(f"Bucket filepath: {bucket_path}")
 
-            blob = (
-                bucket.blob(f"{bucket_path}/{remote_file}")
-                if bucket_path
-                else bucket.blob(remote_file)
-            )
+            blob = bucket.blob(f"{bucket_path}/{remote_file}") if bucket_path else bucket.blob(remote_file)
 
-            print(f"Uploading {local_file} to remote mirror: "
-                  "gs://{blob.name}/")
+            print(f"Uploading {local_file} to remote mirror: " "gs://{blob.name}/")
             blob.upload_from_filename(local_file)
 
         elif bucket_url.startswith("s3://"):
@@ -48,8 +45,7 @@ def mirror_to_bucket(local_file: Path, bucket_url: str,
                 # ! This will only work if the user has the AWS IAM user
                 # ! access keys set up as environment variables.
                 s3.upload_file(local_file, bucket_name, remote_file)
-                print(f"File {local_file} uploaded to "
-                      "{bucket_name}/{remote_file}")
+                print(f"File {local_file} uploaded to " "{bucket_name}/{remote_file}")
                 return True
             except FileNotFoundError:
                 print(f"The file {local_file} was not found")
@@ -59,8 +55,6 @@ def mirror_to_bucket(local_file: Path, bucket_url: str,
                 return False
 
         else:
-            raise ValueError(
-                "Currently, only Google Cloud and S3 storage is supported."
-            )
+            raise ValueError("Currently, only Google Cloud and S3 storage is supported.")
 
     return None
