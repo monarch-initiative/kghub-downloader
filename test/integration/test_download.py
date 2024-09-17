@@ -23,6 +23,8 @@ class TestDownload(unittest.TestCase):
         for file in output_files.values():
             if file.exists():
                 file.unlink()
+            if not file.parent.exists():
+                file.parent.mkdir(parents=True)
 
     def _assert_file_exists(self, file_path: Path):
         self.assertTrue(file_path.exists(), f"File {file_path} does not exist")
