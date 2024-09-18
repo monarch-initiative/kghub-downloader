@@ -3,6 +3,8 @@ import unittest
 from os.path import exists
 from pathlib import Path
 
+import pytest
+
 from kghub_downloader import download, model
 from kghub_downloader.download_utils import download_from_yaml
 
@@ -48,8 +50,9 @@ class TestDownload(unittest.TestCase):
         download.google_drive(resource, output_file, False)
         self._assert_file_exists(output_file)
 
+    @pytest.mark.usefixtures('mock_s3_test_file')
     def test_s3(self):
-        resource = model.DownloadableResource(url="s3://monarch-kg-test/kghub_downloader_test_file.yaml")
+        resource = model.DownloadableResource(url="s3://monarch-test/kghub_downloader_test_file.yaml")
         output_file = output_files["s3"]
         download.s3(resource, output_file, False)
         self._assert_file_exists(output_file)
@@ -60,6 +63,7 @@ class TestDownload(unittest.TestCase):
         download.git(resource, output_file, False)
         self._assert_file_exists(output_file)
 
+    @pytest.mark.usefixtures('mock_s3_test_file')
     def test_yaml_spec_download(self):
         download_from_yaml(yaml_file="example/download.yaml", output_dir="test/output")
         for file in output_files.values():

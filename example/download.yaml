@@ -12,7 +12,7 @@
 - url: https://drive.google.com/uc?id=10ojJffrPSl12OMcu4gyx0fak2CNu6qOs
   local_name: gdrive_test_2.txt
 
-- url: s3://monarch-kg-test/kghub_downloader_test_file.yaml
+- url: s3://monarch-test/kghub_downloader_test_file.yaml
   local_name: s3_test.yaml
 
 - url: git://Knowledge-Graph-Hub/kg-microbe/testfile.zip
