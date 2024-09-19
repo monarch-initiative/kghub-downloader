@@ -86,7 +86,13 @@ def download_from_yaml(
         if download_fn is None:
             raise ValueError(f"Invalid URL scheme for url {item.expanded_url}")
 
-        download_fn(item, outfile_path, snippet_only)
+        try:
+            download_fn(item, outfile_path, snippet_only)
+        except BaseException as e:
+            if outfile_path.exists():
+                outfile_path.unlink()
+
+            raise e
 
         # If mirror, upload to remote storage
         if mirror:
