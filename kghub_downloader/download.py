@@ -84,8 +84,7 @@ def google_cloud_storage(item: DownloadableResource, outfile_path: Path, snippet
 def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from Google Drive."""
     url = item.expanded_url
-    if url.startswith("gdrive:"):
-        url = GOOGLE_DRIVE_PREFIX + url[7:]
+    url = GOOGLE_DRIVE_PREFIX + url[7:]
     gdown.download(url, output=str(outfile_path))
 
 
@@ -194,7 +193,8 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
     url = item.expanded_url
 
     if url.startswith(GOOGLE_DRIVE_PREFIX):
-        return google_drive(item, outfile_path, snippet_only)
+        gdown.download(url, output=str(outfile_path))
+        return
 
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
 
