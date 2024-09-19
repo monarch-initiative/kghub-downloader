@@ -13,35 +13,74 @@ function. That function will be called for that scheme with three arguments:
 """
 
 import ftplib
-import logging
 import os
 import sys
+from contextlib import contextmanager
 from fnmatch import fnmatch
 from pathlib import Path
-from urllib.error import URLError
-from urllib.request import Request, urlopen
 
 import boto3  # type: ignore
 import gdown  # type: ignore
 import requests
 from google.cloud import storage  # type: ignore
 from google.cloud.storage.blob import Blob  # type: ignore
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 from kghub_downloader.model import DownloadableResource
 from kghub_downloader.schemes import register_scheme
 
 GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 
+SNIPPET_SIZE = 1024 * 5
+CHUNK_SIZE = 1024
+
+
+def log_result(fn):
+    """Log the result of a download function."""
+
+    def wrapped(item: DownloadableResource, *args, **kwargs):
+        try:
+            ret = fn(item, *args, **kwargs)
+            tqdm.write(f"OK: Downloaded {item.expanded_url}")
+            return ret
+        except BaseException as e:
+            tqdm.write(f"ERROR: Failed to download {item.expanded_url}")
+            raise e
+
+    return wrapped
+
+
+@contextmanager
+def open_with_write_progress(item: DownloadableResource, outfile_path: Path, size: int = 0, open_mode: str = "wb"):
+    """Open the given file and wrap its write method in a tqdm progress bar."""
+    outfile_fd = outfile_path.open(open_mode)
+    try:
+        with tqdm.wrapattr(
+            outfile_fd,
+            "write",
+            desc=f"{item.expanded_url}",
+            total=size,
+            leave=False,
+            unit="B",
+            unit_scale=True,
+        ) as file:
+            yield file
+    finally:
+        outfile_fd.close()
+
 
 @register_scheme("gs")
+@log_result
 def google_cloud_storage(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from Google Cloud Storage."""
     url = item.expanded_url
-    Blob.from_string(url, client=storage.Client()).download_to_filename(str(outfile_path))
+    blob = Blob.from_string(url, client=storage.Client())
+    with open_with_write_progress(item, outfile_path, blob.size) as outfile:
+        blob.download_to_file(outfile)
 
 
 @register_scheme("gdrive")
+@log_result
 def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from Google Drive."""
     url = item.expanded_url
@@ -51,16 +90,23 @@ def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: b
 
 
 @register_scheme("s3")
+@log_result
 def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from S3 bucket."""
     url = item.expanded_url
     s3 = boto3.client("s3")
     bucket_name = url.split("/")[2]
     remote_file = "/".join(url.split("/")[3:])
-    s3.download_file(bucket_name, remote_file, str(outfile_path))
+
+    s3_object = s3.Object(bucket_name, remote_file)
+    object_size = s3_object.content_length
+
+    with open_with_write_progress(item, outfile_path, object_size) as outfile:
+        s3.object.download_fileobj(outfile)
 
 
 @register_scheme("ftp")
+@log_result
 def ftp(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from an FTP server."""
     url = item.expanded_url
@@ -82,6 +128,7 @@ def ftp(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
 
 
 @register_scheme("git")
+@log_result
 def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from Git."""
     url = item.url
@@ -133,14 +180,15 @@ def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
     # Download the asset
     response = requests.get(asset_url, stream=True, timeout=10)
     response.raise_for_status()
-    with open(str(outfile_path), "wb") as file:
-        for chunk in response.iter_content(chunk_size=8192):
-            file.write(chunk)
-    print(f"Downloaded {asset_name}")
+    size = int(response.headers.get("Content-Length", 0))
+    with open_with_write_progress(item, outfile_path, size) as outfile:
+        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+            outfile.write(chunk)
 
 
 @register_scheme("http")
 @register_scheme("https")
+@log_result
 def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download via HTTP. Google Drive URLs will be downloaded specially."""
     url = item.expanded_url
@@ -148,25 +196,29 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
     if url.startswith(GOOGLE_DRIVE_PREFIX):
         return google_drive(item, outfile_path, snippet_only)
 
-    req = Request(url, headers={"User-Agent": "Mozilla/5.0"})  # noqa: S310
-    try:
-        with urlopen(req) as response:  # noqa: S310
-            if snippet_only:
-                data = response.read(5120)  # first 5 kB of a `bytes` object
-            else:
-                data = response.read()  # a `bytes` object
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
 
-        with open(str(outfile_path), "wb") as out_file:
-            out_file.write(data)
-        if snippet_only:  # Need to clean up the outfile
-            with open(str(outfile_path), "r+") as fd:
-                data = fd.readlines()
-                fd.seek(0)
-                fd.write("\n".join(data[:-1]))
-                fd.truncate()
-    except URLError:
-        logging.error(f"Failed to download: {url}")
-        raise
+    size = int(response.headers.get("Content-Length", 0))
+    if snippet_only and size > SNIPPET_SIZE:
+        size = SNIPPET_SIZE
+
+    with open_with_write_progress(item, outfile_path, size) as outfile:
+        size = 0
+        for chunk in response.iter_content(CHUNK_SIZE):
+            outfile.write(chunk)
+            if snippet_only:
+                size += CHUNK_SIZE
+                if size >= SNIPPET_SIZE:
+                    response.close()
+                    break
+
+    # Remove last line from output if snippet was downloaded
+    if snippet_only:
+        with open(str(outfile_path), "r+") as fd:
+            data = fd.readlines()
+            fd.seek(0)
+            fd.write("\n".join(data[:-1]))
+            fd.truncate()
 
 
 def is_directory(ftp_server, name):
