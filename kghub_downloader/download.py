@@ -93,7 +93,7 @@ def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: b
 def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
     """Download from S3 bucket."""
     url = item.expanded_url
-    s3 = boto3.client("s3")
+    s3 = boto3.resource("s3")
     bucket_name = url.split("/")[2]
     remote_file = "/".join(url.split("/")[3:])
 
