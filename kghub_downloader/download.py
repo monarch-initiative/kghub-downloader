@@ -197,6 +197,7 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
         return
 
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
+    response.raise_for_status()
 
     size = int(response.headers.get("Content-Length", 0))
     if snippet_only and size > SNIPPET_SIZE:
