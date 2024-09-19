@@ -159,15 +159,11 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
         with open(str(outfile_path), "wb") as out_file:
             out_file.write(data)
         if snippet_only:  # Need to clean up the outfile
-            in_file = open(str(outfile_path), "r+")
-            in_lines = in_file.read()
-            in_file.close()
-            splitlines = in_lines.split("\n")
-            outstring = "\n".join(splitlines[:-1])
-            cleanfile = open(str(outfile_path), "w+")
-            for i in range(len(outstring)):
-                cleanfile.write(outstring[i])
-            cleanfile.close()
+            with open(str(outfile_path), "r+") as fd:
+                data = fd.readlines()
+                fd.seek(0)
+                fd.write("\n".join(data[:-1]))
+                fd.truncate()
     except URLError:
         logging.error(f"Failed to download: {url}")
         raise
