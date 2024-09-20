@@ -2,6 +2,8 @@
 
 import logging
 import pathlib
+import time
+import traceback
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -12,14 +14,13 @@ from kghub_downloader import schemes, upload
 from kghub_downloader.elasticsearch import download_from_elastic_search
 from kghub_downloader.model import DownloadableResource
 
-# from compress_json import compress_json
-
 
 def download_from_yaml(
     yaml_file: str,
     output_dir: str,
     ignore_cache: Optional[bool] = False,
     snippet_only: bool = False,
+    verbose: bool = False,
     tags: Optional[List] = None,
     mirror: Optional[str] = None,
 ) -> None:
@@ -31,12 +32,15 @@ def download_from_yaml(
         output_dir: A string pointing to where to write out downloaded files.
         ignore_cache: Ignore cache and download files even if they exist.  [false]
         snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
+        verbose: Show verbose output
         tags: Limit to only downloads with this tag
         mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
     Returns:
         None.
 
     """
+    start_time = time.time()
+
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     with open(yaml_file) as f:
@@ -48,7 +52,21 @@ def download_from_yaml(
     if tags:
         resources = [item for item in resources if item.tag in tags]
 
-    for item in tqdm(resources, desc="Downloading files"):
+    successful_ct = 0
+    unsuccessful_ct = 0
+    skipped_ct = 0
+
+    pbar = tqdm(
+        resources,
+        position=2,
+        leave=False,
+        bar_format="Downloading {n_fmt}/{total_fmt} [{bar:20}]",
+        ascii=".█",
+    )
+
+    for item in resources:
+        pbar.update()
+        pbar.refresh()
         url = item.expanded_url
         outfile_path = output_dir / item.path
         outfile_dir = outfile_path.parent
@@ -70,6 +88,8 @@ def download_from_yaml(
                 outfile_path.unlink()
             else:
                 logging.info("Using cached version of {outfile_path")
+                tqdm.write(f"SKIPPING: {outfile_path} already exists")
+                skipped_ct += 1
                 continue
 
         # Download file
@@ -88,14 +108,37 @@ def download_from_yaml(
 
         try:
             download_fn(item, outfile_path, snippet_only)
+            successful_ct += 1
         except BaseException as e:
+            unsuccessful_ct += 1
             if outfile_path.exists():
                 outfile_path.unlink()
 
-            raise e
+            # If this was cancelled with Ctrl-C, re-raise the exception and let Typer handle it
+            if isinstance(e, KeyboardInterrupt):
+                pbar.close()
+                raise e
 
-        # If mirror, upload to remote storage
+            if verbose:
+                message = traceback.format_exception(e)[-1]
+                tqdm.write(f"{message}")
+
+            # Otherwise, continue downloading
+            # logging.error(f"Failed to download {item.expanded_url}")
+            continue
+
         if mirror:
             upload.mirror_to_bucket(outfile_path, mirror, item.path)
 
-    return None
+    pbar.close()
+    exec_time = time.time() - start_time
+
+    tqdm.write(
+        f"\n\nDownload completed in {exec_time:.2f} seconds.\n\n"
+        f"    successful:   {successful_ct}\n"
+        f"    skipped:      {skipped_ct}\n"
+        f"    unsuccessful: {unsuccessful_ct}\n"
+    )
+
+    if (not verbose) and unsuccessful_ct > 0:
+        tqdm.write("Some downloads were unsuccessful. Run with --verbose to see errors\n")

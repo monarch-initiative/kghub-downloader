@@ -14,6 +14,7 @@ def main(
     yaml_file: Optional[str] = typer.Argument("download.yaml", help="List of files to download in YAML format"),
     output_dir: Optional[str] = typer.Option(".", help="Path to output directory"),
     ignore_cache: Optional[bool] = typer.Option(False, help="Ignoring already downloaded files and download again"),
+    verbose: Optional[bool] = typer.Option(False, help="Show verbose output"),
     tags: Optional[List[str]] = typer.Option(None, help="Optional list of tags to limit downloading to"),  # noqa: B008
     mirror: Optional[str] = typer.Option(
         None,
@@ -25,6 +26,7 @@ def main(
         yaml_file=yaml_file,
         output_dir=output_dir,
         ignore_cache=ignore_cache,
+        verbose=verbose,
         tags=tags,
         mirror=mirror,
     )
