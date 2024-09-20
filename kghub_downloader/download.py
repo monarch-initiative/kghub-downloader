@@ -101,7 +101,7 @@ def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> No
     object_size = s3_object.content_length
 
     with open_with_write_progress(item, outfile_path, object_size) as outfile:
-        s3.object.download_fileobj(outfile)
+        s3_object.download_fileobj(outfile)
 
 
 @register_scheme("ftp")
