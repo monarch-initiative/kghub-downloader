@@ -26,7 +26,7 @@ from google.cloud import storage  # type: ignore
 from google.cloud.storage.blob import Blob  # type: ignore
 from tqdm import tqdm
 
-from kghub_downloader.model import DownloadableResource
+from kghub_downloader.model import DownloadableResource, DownloadOptions
 from kghub_downloader.schemes import register_scheme
 
 GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
@@ -51,37 +51,46 @@ def log_result(fn):
 
 
 @contextmanager
-def open_with_write_progress(item: DownloadableResource, outfile_path: Path, size: int = 0, open_mode: str = "wb"):
+def open_with_write_progress(
+    item: DownloadableResource,
+    outfile_path: Path,
+    show_progress: bool,
+    size: int = 0,
+    open_mode: str = "wb"
+):
     """Open the given file and wrap its write method in a tqdm progress bar."""
     outfile_fd = outfile_path.open(open_mode)
     try:
-        with tqdm.wrapattr(
-            outfile_fd,
-            "write",
-            desc=f"{item.expanded_url}",
-            total=size,
-            leave=False,
-            unit="B",
-            unit_scale=True,
-        ) as file:
-            yield file
+        if show_progress:
+            with tqdm.wrapattr(
+                outfile_fd,
+                "write",
+                desc=f"{item.expanded_url}",
+                total=size,
+                leave=False,
+                unit="B",
+                unit_scale=True,
+            ) as file:
+                yield file
+        else:
+            yield outfile_fd
     finally:
         outfile_fd.close()
 
 
 @register_scheme("gs")
 @log_result
-def google_cloud_storage(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def google_cloud_storage(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download from Google Cloud Storage."""
     url = item.expanded_url
     blob = Blob.from_string(url, client=storage.Client())
-    with open_with_write_progress(item, outfile_path, blob.size) as outfile:
+    with open_with_write_progress(item, outfile_path, options.progress, blob.size) as outfile:
         blob.download_to_file(outfile)
 
 
 @register_scheme("gdrive")
 @log_result
-def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def google_drive(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download from Google Drive."""
     url = item.expanded_url
     url = GOOGLE_DRIVE_PREFIX + url[7:]
@@ -90,7 +99,7 @@ def google_drive(item: DownloadableResource, outfile_path: Path, snippet_only: b
 
 @register_scheme("s3")
 @log_result
-def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def s3(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download from S3 bucket."""
     url = item.expanded_url
     s3 = boto3.resource("s3")
@@ -100,13 +109,13 @@ def s3(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> No
     s3_object = s3.Object(bucket_name, remote_file)
     object_size = s3_object.content_length
 
-    with open_with_write_progress(item, outfile_path, object_size) as outfile:
+    with open_with_write_progress(item, outfile_path, options.progress, object_size) as outfile:
         s3_object.download_fileobj(outfile)
 
 
 @register_scheme("ftp")
 @log_result
-def ftp(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def ftp(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download from an FTP server."""
     url = item.expanded_url
 
@@ -128,7 +137,7 @@ def ftp(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
 
 @register_scheme("git")
 @log_result
-def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def git(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download from Git."""
     url = item.url
     url_split = url.split("/")
@@ -180,7 +189,7 @@ def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
     response = requests.get(asset_url, stream=True, timeout=10)
     response.raise_for_status()
     size = int(response.headers.get("Content-Length", 0))
-    with open_with_write_progress(item, outfile_path, size) as outfile:
+    with open_with_write_progress(item, outfile_path, options.progress, size) as outfile:
         for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
             outfile.write(chunk)
 
@@ -188,7 +197,7 @@ def git(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> N
 @register_scheme("http")
 @register_scheme("https")
 @log_result
-def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> None:
+def http(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
     """Download via HTTP. Google Drive URLs will be downloaded specially."""
     url = item.expanded_url
 
@@ -200,21 +209,21 @@ def http(item: DownloadableResource, outfile_path: Path, snippet_only: bool) -> 
     response.raise_for_status()
 
     size = int(response.headers.get("Content-Length", 0))
-    if snippet_only and size > SNIPPET_SIZE:
+    if options.snippet_only and size > SNIPPET_SIZE:
         size = SNIPPET_SIZE
 
-    with open_with_write_progress(item, outfile_path, size) as outfile:
+    with open_with_write_progress(item, outfile_path, options.progress, size) as outfile:
         size = 0
         for chunk in response.iter_content(CHUNK_SIZE):
             outfile.write(chunk)
-            if snippet_only:
+            if options.snippet_only:
                 size += CHUNK_SIZE
                 if size >= SNIPPET_SIZE:
                     response.close()
                     break
 
     # Remove last line from output if snippet was downloaded
-    if snippet_only:
+    if options.snippet_only:
         with open(str(outfile_path), "r+") as fd:
             data = fd.readlines()
             fd.seek(0)

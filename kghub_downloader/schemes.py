@@ -4,9 +4,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Dict, Optional
 
-from kghub_downloader.model import DownloadableResource
+from kghub_downloader.model import DownloadableResource, DownloadOptions
 
-ResourceDownloadFunction = Callable[[DownloadableResource, Path, bool], None]
+ResourceDownloadFunction = Callable[[DownloadableResource, Path, DownloadOptions], None]
 
 ResourceDownloadRegistry = Dict[str, ResourceDownloadFunction]
 

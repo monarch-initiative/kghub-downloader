@@ -7,6 +7,7 @@ import pytest
 
 from kghub_downloader import download, model
 from kghub_downloader.download_utils import download_from_yaml
+from kghub_downloader.model import DownloadOptions
 
 # ruff: noqa: D100, D101, D102
 
@@ -35,32 +36,32 @@ class TestDownload(unittest.TestCase):
     def test_http(self):
         resource = model.DownloadableResource(url="https://zfin.org/downloads/phenoGeneCleanData_fish.txt")
         output_file = output_files["https"]
-        download.http(resource, output_file, False)
+        download.http(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
     def test_google_cloud_storage(self):
         resource = model.DownloadableResource(url="gs://monarch-test/kghub_downloader_test_file.yaml")
         output_file = output_files["google_cloud_storage"]
-        download.google_cloud_storage(resource, output_file, False)
+        download.google_cloud_storage(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
     def test_google_drive(self):
         resource = model.DownloadableResource(url="gdrive:10ojJffrPSl12OMcu4gyx0fak2CNu6qOs")
         output_file = output_files["google_drive_1"]
-        download.google_drive(resource, output_file, False)
+        download.google_drive(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
     @pytest.mark.usefixtures('mock_s3_test_file')
     def test_s3(self):
         resource = model.DownloadableResource(url="s3://monarch-test/kghub_downloader_test_file.yaml")
         output_file = output_files["s3"]
-        download.s3(resource, output_file, False)
+        download.s3(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
     def test_git(self):
         resource = model.DownloadableResource(url="git://Knowledge-Graph-Hub/kg-microbe/testfile.zip")
         output_file = output_files["git"]
-        download.git(resource, output_file, False)
+        download.git(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
     @pytest.mark.usefixtures('mock_s3_test_file')

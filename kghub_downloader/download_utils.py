@@ -7,20 +7,19 @@ import traceback
 from typing import List, Optional
 from urllib.parse import urlparse
 
+import typer
 import yaml
-from tqdm.auto import tqdm  # type: ignore
+from tqdm.auto import tqdm
 
 from kghub_downloader import schemes, upload
 from kghub_downloader.elasticsearch import download_from_elastic_search
-from kghub_downloader.model import DownloadableResource
+from kghub_downloader.model import DownloadableResource, DownloadOptions
 
 
 def download_from_yaml(
     yaml_file: str,
     output_dir: str,
-    ignore_cache: Optional[bool] = False,
-    snippet_only: bool = False,
-    verbose: bool = False,
+    download_options: Optional[DownloadOptions] = None,
     tags: Optional[List] = None,
     mirror: Optional[str] = None,
 ) -> None:
@@ -30,16 +29,15 @@ def download_from_yaml(
     Args:
         yaml_file: A string pointing to the download.yaml file, to be parsed for things to download.
         output_dir: A string pointing to where to write out downloaded files.
-        ignore_cache: Ignore cache and download files even if they exist.  [false]
-        snippet_only: Downloads only the first 5 kB of each uncompressed source, for testing and file checks
-        verbose: Show verbose output
+        download_options: An object containing boolean flags that change download behavior
         tags: Limit to only downloads with this tag
         mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
-    Returns:
-        None.
 
     """
     start_time = time.time()
+
+    if download_options is None:
+        download_options = DownloadOptions()
 
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -74,7 +72,7 @@ def download_from_yaml(
         logging.info("Retrieving %s from %s" % (item.path, url))
 
         # Can't truncate compressed file
-        if snippet_only and item.is_compressed_file:
+        if download_options.snippet_only and item.is_compressed_file:
             logging.error("Asked to download snippets; can't snippet {}".format(item))
             continue
 
@@ -83,7 +81,7 @@ def download_from_yaml(
             outfile_dir.mkdir(parents=True, exist_ok=True)
 
         if outfile_path.exists():
-            if ignore_cache:
+            if download_options.ignore_cache:
                 logging.info(f"Deleting cached version of {outfile_path}")
                 outfile_path.unlink()
             else:
@@ -107,24 +105,25 @@ def download_from_yaml(
             raise ValueError(f"Invalid URL scheme for url {item.expanded_url}")
 
         try:
-            download_fn(item, outfile_path, snippet_only)
+            download_fn(item, outfile_path, download_options)
             successful_ct += 1
         except BaseException as e:
             unsuccessful_ct += 1
             if outfile_path.exists():
                 outfile_path.unlink()
 
+            if download_options.fail_on_error:
+                raise e
+
             # If this was cancelled with Ctrl-C, re-raise the exception and let Typer handle it
             if isinstance(e, KeyboardInterrupt):
                 pbar.close()
                 raise e
 
-            if verbose:
+            if download_options.verbose:
                 message = traceback.format_exception(e)[-1]
                 tqdm.write(f"{message}")
 
-            # Otherwise, continue downloading
-            # logging.error(f"Failed to download {item.expanded_url}")
             continue
 
         if mirror:
@@ -140,5 +139,16 @@ def download_from_yaml(
         f"    unsuccessful: {unsuccessful_ct}\n"
     )
 
-    if (not verbose) and unsuccessful_ct > 0:
+    show_verbose_message = all(
+        (
+            not download_options.fail_on_error,
+            not download_options.verbose,
+            unsuccessful_ct > 0,
+        )
+    )
+
+    if show_verbose_message:
         tqdm.write("Some downloads were unsuccessful. Run with --verbose to see errors\n")
+
+    if unsuccessful_ct > 0:
+        raise typer.Exit(code=1)
