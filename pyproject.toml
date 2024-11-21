@@ -22,9 +22,9 @@ pydantic = "^2.9.1"
 pydantic-settings = "^2.5.2"
 
 [tool.poetry.group.dev.dependencies]
-mkdocs = ">=1.4"
+mkdocs = ">=1.6.1"
 mkdocs-material = ">=9.5"
-mkdocstrings = {extras = ["python"], version = "^0.20.0"}
+mkdocstrings = {extras = ["python"], version = "^0.27.0"}
 moto = "^5.0.1"
 mypy = "^1.11.2"
 tox = ">=4.16.0"
