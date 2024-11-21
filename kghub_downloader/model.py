@@ -17,6 +17,16 @@ valid_url_schemes = [
 ]
 
 
+class DownloadOptions(BaseModel):
+    """Options for downloading a resource."""
+
+    snippet_only: bool = False
+    ignore_cache: bool = False
+    progress: bool = False
+    fail_on_error: bool = True
+    verbose: bool = False
+
+
 class DownloadableResource(BaseModel):
     """A resource able to be downloaded."""
 

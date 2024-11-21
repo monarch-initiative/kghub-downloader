@@ -9,7 +9,8 @@ class TestSchemeRegister(unittest.TestCase):
         registry = {}
 
         @schemes.register_scheme("ex", registry)
-        def downloader(item: model.DownloadableResource, path: Path, snippet_only: bool) -> None:
+        def downloader(item: model.DownloadableResource, path: Path,
+                       download_options: model.DownloadOptions) -> None:
             return
 
         self.assertEqual(list(registry.keys()), ["ex"])
