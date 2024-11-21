@@ -27,11 +27,11 @@ def main(
     progress: Annotated[
         bool,
         typer.Option(help="Show progress for individual downloads"),
-    ] = False,
+    ] = True,
     fail_on_error: Annotated[
         bool,
         typer.Option(help="Do not attempt to download more files if one raises an error"),
-    ] = True,
+    ] = False,
     snippet_only: Annotated[
         bool,
         typer.Option(help="Only download a snippet of the file. [HTTP(S) resources only.")
