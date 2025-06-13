@@ -33,6 +33,10 @@ Available options are:
   - Google Cloud Storage (`gs://`)
   - Google Drive (`gdrive://` or https://drive.google.com/...). The file must be publicly accessible.
   - Amazon AWS S3 bucket (`s3://`)
+  - GitHub Release Assets (`git://RepositoryOwner/RepositoryName`)
+
+  If the URL includes a name in `{CURLY_BRACES}`, it will be expanded from environment variables.
+- **glob**: An optional glob pattern to limit downloading files (FTP only)
 - **local_name**: The name to save the file as locally
 - **tag**: A tag to use to filter downloads
 - **api**: The API to use to download the file. Currently supported: `elasticsearch`
@@ -81,20 +85,24 @@ download_from_yaml(yaml_file="download.yaml", output_dir="data")
 To download files listed in a download.yaml file:
 
 ```bash
-$ downloader [OPTIONS] ARGS
+$ downloader [OPTIONS] [YAML_FILE]
 ```
 
-| OPTIONS      |                                                                                                       |
-| ------------ | ----------------------------------------------------------------------------------------------------- |
-| yaml_file    | Path to the download.yaml file, to be parsed for things to download.<br>Defaults to `./download.yaml` |
-| ignore_cache | Ignore cache and download files even if they exist (Default `False`)                                  |
-| snippet_only | Downloads only the first 5 kB of each uncompressed source, for testing and file checks                |
-| tags         | Limit to only downloads with this tag                                                                 |
-| mirror       | Remote storage URL to upload downloaded files to.<br/>Supported buckets: Google Cloud Storage         |
+**Arguments**:
 
-| ARGUMENTS  |                                 |
-| ---------- | ------------------------------- |
-| output_dir | Where to save downloaded files. |
+* `[YAML_FILE]`: List of files to download in YAML format  [default: download.yaml]
+
+**Options**:
+
+* `--output-dir TEXT`: Path to output directory  [default: .]
+* `--ignore-cache / --no-ignore-cache`: Ignoring already downloaded files and download again  [default: no-ignore-cache]
+* `--progress / --no-progress`: Show progress for individual downloads  [default: progress]
+* `--fail-on-error / --no-fail-on-error`: Do not attempt to download more files if one raises an error  [default: no-fail-on-error]
+* `--snippet-only / --no-snippet-only`: Only download a snippet of the file. [HTTP(S) resources only.  [default: no-snippet-only]
+* `--verbose / --no-verbose`: Show verbose output  [default: no-verbose]
+* `--tags TEXT`: Optional list of tags to limit downloading to
+* `--mirror TEXT`: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
+
 
 Examples:
 
