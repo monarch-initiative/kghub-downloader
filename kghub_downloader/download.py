@@ -435,7 +435,9 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
     
     failed_downloads = []
     
-    with tqdm(total=len(ids), desc=f"Downloading indexed files") as pbar:
+    progress_enabled = getattr(options, "progress", True)
+    progress_ctx = tqdm(total=len(ids), desc=f"Downloading indexed files") if progress_enabled else nullcontext()
+    with progress_ctx as pbar:
         for id_value in ids:
             try:
                 file_url = item.url_pattern.replace("{ID}", str(id_value))
