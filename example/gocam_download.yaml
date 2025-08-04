@@ -1,0 +1,8 @@
+---
+# Example configuration for downloading GO-CAM files using index-based approach
+- url: index://gocam-models
+  index_url: https://go-data-product-live-go-cam.s3.us-east-1.amazonaws.com/product/json/provider-to-model.json
+  url_pattern: https://live-go-cam.geneontology.io/product/yaml/go-cam/{ID}.yaml
+  local_name: gocam_models.yaml
+  progress: true
+  verbose: true
