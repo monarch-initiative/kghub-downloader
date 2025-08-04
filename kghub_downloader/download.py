@@ -284,7 +284,32 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
 
 
 def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) -> List[str]:
-    """Extract IDs from JSON data using a JSONPath-like notation."""
+    """
+    Extract IDs from JSON data using a simplified JSONPath-like notation.
+    
+    This function supports extracting identifiers from various JSON structures:
+    - Flat arrays: ["id1", "id2", "id3"]
+    - Objects with arrays: {"source1": ["id1", "id2"], "source2": ["id3"]}
+    - Nested structures with dot notation paths
+    
+    Args:
+        data: The JSON data (dict or list) to extract IDs from
+        id_path: Optional dot-separated path to navigate nested structures.
+                If empty, extracts all IDs from arrays in the top level.
+                
+    Returns:
+        List of string identifiers extracted from the JSON data
+        
+    Examples:
+        >>> extract_ids_from_json(["a", "b", "c"], "")
+        ["a", "b", "c"]
+        
+        >>> extract_ids_from_json({"src1": ["a", "b"], "src2": ["c"]}, "")
+        ["a", "b", "c"]
+        
+        >>> extract_ids_from_json({"results": {"models": ["x", "y"]}}, "results.models")
+        ["x", "y"]
+    """
     if not id_path:
         if isinstance(data, list):
             return [str(item) for item in data]
@@ -332,7 +357,44 @@ def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) 
 @register_scheme("index")
 @log_result
 def index_based_download(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
-    """Download multiple files based on an index URL and URL pattern."""
+    """
+    Download multiple files based on an index URL containing identifiers and a URL pattern template.
+    
+    This function fetches a JSON index file, extracts identifiers from it, and downloads individual
+    files using a URL pattern template where {ID} is replaced with each identifier.
+    
+    Args:
+        item: DownloadableResource containing the configuration:
+            - index_url: URL to fetch the JSON index containing identifiers
+            - url_pattern: URL template with {ID} placeholder for individual file downloads
+            - id_path: Optional JSONPath-like string to extract IDs from nested JSON structures
+            - local_name: Optional filename template for determining file extensions
+        outfile_path: Path to the output directory where files will be saved
+        options: DownloadOptions containing:
+            - progress: Whether to show progress bars
+            - verbose: Whether to show detailed logging
+            - fail_on_error: Whether to stop on first error or continue downloading
+    
+    Returns:
+        None: Files are saved to disk in the specified output directory
+    
+    Raises:
+        ValueError: If index_url or url_pattern are not provided
+        ValueError: If the index JSON cannot be parsed
+        ValueError: If no IDs can be extracted from the index data
+        requests.exceptions.RequestException: If index or file downloads fail
+        
+    Examples:
+        Basic usage with flat JSON array:
+            index_url: "https://example.com/ids.json" -> ["id1", "id2", "id3"]
+            url_pattern: "https://example.com/files/{ID}.yaml"
+            
+        Nested JSON structure (like GO-CAM):
+            index_url: "https://s3.amazonaws.com/provider-to-model.json"
+            -> {"source1": ["id1", "id2"], "source2": ["id3"]}
+            id_path: "" (extracts all IDs from all arrays)
+            url_pattern: "https://example.com/models/{ID}.yaml"
+    """
     if not item.index_url:
         raise ValueError("index_url is required for index-based downloads")
     if not item.url_pattern:
