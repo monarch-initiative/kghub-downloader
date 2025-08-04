@@ -351,7 +351,7 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
     if not item.url_pattern:
         raise ValueError("url_pattern is required for index-based downloads")
     
-    index_response = requests.get(item.index_url, timeout=10)
+    index_response = requests.get(item.index_url, timeout=getattr(options, "timeout", 10))
     index_response.raise_for_status()
     
     try:
