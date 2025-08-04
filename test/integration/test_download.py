@@ -18,6 +18,7 @@ output_files = {
     "google_drive_2": Path("test/output/gdrive_test_2.txt"),
     "s3": Path("test/output/s3_test.yaml"),
     "git": Path("test/output/git_test.zip"),
+    "index": Path("test/output/index_test"),
 }
 
 
@@ -25,7 +26,11 @@ class TestDownload(unittest.TestCase):
     def setUp(self):
         for file in output_files.values():
             if file.exists():
-                file.unlink()
+                if file.is_dir():
+                    import shutil
+                    shutil.rmtree(file)
+                else:
+                    file.unlink()
             if not file.parent.exists():
                 file.parent.mkdir(parents=True)
 
@@ -39,6 +44,7 @@ class TestDownload(unittest.TestCase):
         download.http(resource, output_file, DownloadOptions())
         self._assert_file_exists(output_file)
 
+    @unittest.skipIf(not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "Google Cloud credentials not available")
     def test_google_cloud_storage(self):
         resource = model.DownloadableResource(url="gs://monarch-test/kghub_downloader_test_file.yaml")
         output_file = output_files["google_cloud_storage"]
@@ -65,6 +71,7 @@ class TestDownload(unittest.TestCase):
         self._assert_file_exists(output_file)
 
     @pytest.mark.usefixtures('mock_s3_test_file')
+    @unittest.skipIf(not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "Google Cloud credentials not available")
     def test_yaml_spec_download(self):
         download_from_yaml(yaml_file="example/download.yaml", output_dir="test/output")
         for file in output_files.values():

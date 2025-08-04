@@ -69,6 +69,7 @@ class TestFTPDownload(unittest.TestCase):
         self.assertTrue(is_matching_filename("file.jpg", None))
 
     @unittest.skipIf(os.getenv("GITHUB_ACTIONS") == "true", "This test needs credentials to run.")
+    @unittest.skipIf(not os.getenv("FTP_USERNAME") or not os.getenv("FTP_PASSWORD"), "FTP credentials not available")
     def test_actual_upload_download(self):
         # Credentials available at: https://dlptest.com/ftp-test/
         pwd = Path.cwd()

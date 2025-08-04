@@ -13,11 +13,13 @@ function. That function will be called for that scheme with three arguments:
 """
 
 import ftplib
+import json
 import os
 import sys
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import boto3  # type: ignore
 import gdown  # type: ignore
@@ -279,3 +281,114 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
     except ftplib.error_perm as e:
         # Handle permission errors
         print(f"Permission denied: {e}")
+
+
+def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) -> List[str]:
+    """Extract IDs from JSON data using a JSONPath-like notation."""
+    if not id_path:
+        if isinstance(data, list):
+            return [str(item) for item in data]
+        elif isinstance(data, dict):
+            all_ids = []
+            for value in data.values():
+                if isinstance(value, list):
+                    all_ids.extend([str(item) for item in value])
+            return all_ids
+        else:
+            return [str(data)]
+    
+    parts = id_path.split(".")
+    current = data
+    
+    for part in parts:
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        elif isinstance(current, dict):
+            all_ids = []
+            for key, value in current.items():
+                if isinstance(value, list):
+                    all_ids.extend([str(item) for item in value])
+                elif isinstance(value, dict) and part in value:
+                    if isinstance(value[part], list):
+                        all_ids.extend([str(item) for item in value[part]])
+                    else:
+                        all_ids.append(str(value[part]))
+            return all_ids
+        else:
+            return []
+    
+    if isinstance(current, list):
+        return [str(item) for item in current]
+    elif isinstance(current, dict):
+        all_ids = []
+        for value in current.values():
+            if isinstance(value, list):
+                all_ids.extend([str(item) for item in value])
+        return all_ids
+    else:
+        return [str(current)]
+
+
+@register_scheme("index")
+@log_result
+def index_based_download(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
+    """Download multiple files based on an index URL and URL pattern."""
+    if not item.index_url:
+        raise ValueError("index_url is required for index-based downloads")
+    if not item.url_pattern:
+        raise ValueError("url_pattern is required for index-based downloads")
+    
+    index_response = requests.get(item.index_url, timeout=10)
+    index_response.raise_for_status()
+    
+    try:
+        index_data = index_response.json()
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse index JSON from {item.index_url}: {e}")
+    
+    ids = extract_ids_from_json(index_data, item.id_path or "")
+    
+    if not ids:
+        raise ValueError(f"No IDs found in index data using path: {item.id_path}")
+    
+    outfile_path.mkdir(parents=True, exist_ok=True)
+    
+    failed_downloads = []
+    
+    with tqdm(total=len(ids), desc=f"Downloading indexed files") as pbar:
+        for id_value in ids:
+            try:
+                file_url = item.url_pattern.replace("{ID}", str(id_value))
+                
+                local_filename = f"{id_value}.yaml"
+                if item.local_name:
+                    extension = item.local_name.split(".")[-1] if "." in item.local_name else "yaml"
+                    local_filename = f"{id_value}.{extension}"
+                
+                local_file_path = outfile_path / local_filename
+                
+                response = requests.get(file_url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
+                response.raise_for_status()
+                
+                with open(local_file_path, "wb") as f:
+                    for chunk in response.iter_content(CHUNK_SIZE):
+                        f.write(chunk)
+                
+                if options.verbose:
+                    tqdm.write(f"Downloaded: {file_url} -> {local_file_path}")
+                    
+            except Exception as e:
+                if options.fail_on_error:
+                    raise e
+                else:
+                    failed_downloads.append((id_value, str(e)))
+                    if options.verbose:
+                        tqdm.write(f"Failed to download {id_value}: {e}")
+            
+            pbar.update(1)
+    
+    if failed_downloads and not options.fail_on_error:
+        tqdm.write(f"Failed to download {len(failed_downloads)} files out of {len(ids)}")
+        if options.verbose:
+            for id_value, error in failed_downloads:
+                tqdm.write(f"  {id_value}: {error}")
