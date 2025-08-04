@@ -18,7 +18,6 @@ output_files = {
     "google_drive_2": Path("test/output/gdrive_test_2.txt"),
     "s3": Path("test/output/s3_test.yaml"),
     "git": Path("test/output/git_test.zip"),
-    "index": Path("test/output/index_test"),
 }
 
 
