@@ -380,7 +380,12 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
                 
                 local_file_path = outfile_path / local_filename
                 
-                response = requests.get(file_url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
+                response = requests.get(
+                    file_url,
+                    headers={"User-Agent": DEFAULT_USER_AGENT},
+                    stream=True,
+                    timeout=DEFAULT_TIMEOUT
+                )
                 response.raise_for_status()
                 
                 with open(local_file_path, "wb") as f:
