@@ -464,7 +464,7 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
                 if options.verbose:
                     tqdm.write(f"Downloaded: {file_url} -> {local_file_path}")
                     
-            except Exception as e:
+            except requests.RequestException as e:
                 if options.fail_on_error:
                     raise e
                 else:
