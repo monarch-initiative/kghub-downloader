@@ -55,15 +55,11 @@ class TestExtractIdsFromJson(unittest.TestCase):
 class TestIndexBasedDownload(unittest.TestCase):
     
     def setUp(self):
-        self.test_output_dir = Path("test/output/index_test")
-        if self.test_output_dir.exists():
-            import shutil
-            shutil.rmtree(self.test_output_dir)
+        self._tempdir = tempfile.TemporaryDirectory()
+        self.test_output_dir = Path(self._tempdir.name)
     
     def tearDown(self):
-        if self.test_output_dir.exists():
-            import shutil
-            shutil.rmtree(self.test_output_dir)
+        self._tempdir.cleanup()
     
     @patch('requests.get')
     def test_index_based_download_success(self, mock_get):
