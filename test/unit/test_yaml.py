@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from pydantic import ValidationError
 
-from kghub_downloader.download_utils import DownloadableResource
+from kghub_downloader.model import DownloadableResource
 
 
 class TestYAMLValidate(unittest.TestCase):
@@ -42,3 +42,14 @@ class TestYAMLValidate(unittest.TestCase):
                 tag="tag",
                 local_name="local_name",
             )
+
+    def test_index_url_scheme(self):
+        resource = DownloadableResource(
+            url="index://test",
+            index_url="https://example.com/index.json",
+            url_pattern="https://example.com/files/{ID}.yaml",
+            local_name="test_files"
+        )
+        self.assertEqual(resource.url, "index://test")
+        self.assertEqual(resource.index_url, "https://example.com/index.json")
+        self.assertEqual(resource.url_pattern, "https://example.com/files/{ID}.yaml")

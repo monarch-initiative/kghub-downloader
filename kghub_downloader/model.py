@@ -14,6 +14,7 @@ valid_url_schemes = [
     "git",
     "s3",
     "ftp",
+    "index",
 ]
 
 
@@ -39,6 +40,11 @@ class DownloadableResource(BaseModel):
     # ElasticSearch parameters. Should probably be split into a nested config.
     query_file: Optional[FilePath] = None
     index: Optional[str] = None
+    
+    # Index-based download parameters
+    index_url: Optional[str] = None
+    url_pattern: Optional[str] = None
+    id_path: Optional[str] = None
 
     @property
     def path(self) -> pathlib.Path:

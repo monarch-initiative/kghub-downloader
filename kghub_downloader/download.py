@@ -13,11 +13,13 @@ function. That function will be called for that scheme with three arguments:
 """
 
 import ftplib
+import json
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import boto3  # type: ignore
 import gdown  # type: ignore
@@ -33,6 +35,8 @@ GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 
 SNIPPET_SIZE = 1024 * 5
 CHUNK_SIZE = 1024
+DEFAULT_USER_AGENT = "Mozilla/5.0"
+DEFAULT_TIMEOUT = 10
 
 
 def log_result(fn):
@@ -279,3 +283,200 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
     except ftplib.error_perm as e:
         # Handle permission errors
         print(f"Permission denied: {e}")
+
+
+def _extract_ids_from_list(data_list: List[Any]) -> List[str]:
+    """Helper to extract IDs from a list."""
+    return [str(item) for item in data_list]
+
+
+def _extract_ids_from_dict(data_dict: Dict[str, Any]) -> List[str]:
+    """Helper to extract IDs from a dict where values are lists."""
+    all_ids = []
+    for value in data_dict.values():
+        if isinstance(value, list):
+            all_ids.extend(_extract_ids_from_list(value))
+    return all_ids
+
+
+def _traverse_json_path(data: Union[Dict[str, Any], List[Any]], parts: List[str]) -> Any:
+    """Helper to traverse JSON data using a list of path parts."""
+    current = data
+    for part in parts:
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        elif isinstance(current, dict):
+            # If part not found, try to extract from nested dicts/lists
+            all_ids = []
+            for key, value in current.items():
+                if isinstance(value, list):
+                    all_ids.extend(_extract_ids_from_list(value))
+                elif isinstance(value, dict) and part in value:
+                    if isinstance(value[part], list):
+                        all_ids.extend(_extract_ids_from_list(value[part]))
+                    else:
+                        all_ids.append(str(value[part]))
+            return all_ids
+        else:
+            return []
+    return current
+
+
+def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) -> List[str]:
+    """
+    Extract IDs from JSON data using a simplified JSONPath-like notation.
+    
+    This function supports extracting identifiers from various JSON structures:
+    - Flat arrays: ["id1", "id2", "id3"]
+    - Objects with arrays: {"source1": ["id1", "id2"], "source2": ["id3"]}
+    - Nested structures with dot notation paths
+    
+    Args:
+        data: The JSON data (dict or list) to extract IDs from
+        id_path: Optional dot-separated path to navigate nested structures.
+                If empty, extracts all IDs from arrays in the top level.
+                
+    Returns:
+        List of string identifiers extracted from the JSON data
+        
+    Examples:
+        >>> extract_ids_from_json(["a", "b", "c"], "")
+        ["a", "b", "c"]
+        
+        >>> extract_ids_from_json({"src1": ["a", "b"], "src2": ["c"]}, "")
+        ["a", "b", "c"]
+        
+        >>> extract_ids_from_json({"results": {"models": ["x", "y"]}}, "results.models")
+        ["x", "y"]
+    """
+    if not id_path:
+        if isinstance(data, list):
+            return _extract_ids_from_list(data)
+        elif isinstance(data, dict):
+            return _extract_ids_from_dict(data)
+        else:
+            return [str(data)]
+
+    parts = id_path.split(".")
+    current = _traverse_json_path(data, parts)
+
+    if isinstance(current, list):
+        return _extract_ids_from_list(current)
+    elif isinstance(current, dict):
+        return _extract_ids_from_dict(current)
+    elif isinstance(current, str):
+        return [current]
+    elif current is not None:
+        return [str(current)]
+    else:
+        return []
+
+
+@register_scheme("index")
+@log_result
+def index_based_download(item: DownloadableResource, outfile_path: Path, options: DownloadOptions) -> None:
+    """
+    Download multiple files based on an index URL containing identifiers and a URL pattern template.
+    
+    This function fetches a JSON index file, extracts identifiers from it, and downloads individual
+    files using a URL pattern template where {ID} is replaced with each identifier.
+    
+    Args:
+        item: DownloadableResource containing the configuration:
+            - index_url: URL to fetch the JSON index containing identifiers
+            - url_pattern: URL template with {ID} placeholder for individual file downloads
+            - id_path: Optional JSONPath-like string to extract IDs from nested JSON structures
+            - local_name: Optional filename template for determining file extensions
+        outfile_path: Path to the output directory where files will be saved
+        options: DownloadOptions containing:
+            - progress: Whether to show progress bars
+            - verbose: Whether to show detailed logging
+            - fail_on_error: Whether to stop on first error or continue downloading
+    
+    Returns:
+        None: Files are saved to disk in the specified output directory
+    
+    Raises:
+        ValueError: If index_url or url_pattern are not provided
+        ValueError: If the index JSON cannot be parsed
+        ValueError: If no IDs can be extracted from the index data
+        requests.exceptions.RequestException: If index or file downloads fail
+        
+    Examples:
+        Basic usage with flat JSON array:
+            index_url: "https://example.com/ids.json" -> ["id1", "id2", "id3"]
+            url_pattern: "https://example.com/files/{ID}.yaml"
+            
+        Nested JSON structure (like GO-CAM):
+            index_url: "https://s3.amazonaws.com/provider-to-model.json"
+            -> {"source1": ["id1", "id2"], "source2": ["id3"]}
+            id_path: "" (extracts all IDs from all arrays)
+            url_pattern: "https://example.com/models/{ID}.yaml"
+    """
+    if not item.index_url:
+        raise ValueError("index_url is required for index-based downloads")
+    if not item.url_pattern:
+        raise ValueError("url_pattern is required for index-based downloads")
+    
+    index_response = requests.get(item.index_url, timeout=10)
+    index_response.raise_for_status()
+    
+    try:
+        index_data = index_response.json()
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse index JSON from {item.index_url}: {e}")
+    
+    ids = extract_ids_from_json(index_data, item.id_path or "")
+    
+    if not ids:
+        raise ValueError(f"No IDs found in index data using path: {item.id_path}")
+    
+    outfile_path.mkdir(parents=True, exist_ok=True)
+    
+    failed_downloads = []
+    
+    progress_enabled = getattr(options, "progress", True)
+    progress_ctx = tqdm(total=len(ids), desc=f"Downloading indexed files") if progress_enabled else nullcontext()
+    with progress_ctx as pbar:
+        for id_value in ids:
+            try:
+                file_url = item.url_pattern.replace("{ID}", str(id_value))
+                
+                local_filename = f"{id_value}.yaml"
+                if item.local_name:
+                    extension = item.local_name.split(".")[-1] if "." in item.local_name else "yaml"
+                    local_filename = f"{id_value}.{extension}"
+                
+                local_file_path = outfile_path / local_filename
+                
+                response = requests.get(
+                    file_url,
+                    headers={"User-Agent": DEFAULT_USER_AGENT},
+                    stream=True,
+                    timeout=DEFAULT_TIMEOUT
+                )
+                response.raise_for_status()
+                
+                with open(local_file_path, "wb") as f:
+                    for chunk in response.iter_content(CHUNK_SIZE):
+                        f.write(chunk)
+                
+                if options.verbose:
+                    tqdm.write(f"Downloaded: {file_url} -> {local_file_path}")
+                    
+            except requests.RequestException as e:
+                if options.fail_on_error:
+                    raise e
+                else:
+                    failed_downloads.append((id_value, str(e)))
+                    if options.verbose:
+                        tqdm.write(f"Failed to download {id_value}: {e}")
+            
+            if progress_enabled and pbar:
+                pbar.update(1)
+    
+    if failed_downloads and not options.fail_on_error:
+        tqdm.write(f"Failed to download {len(failed_downloads)} files out of {len(ids)}")
+        if options.verbose:
+            for id_value, error in failed_downloads:
+                tqdm.write(f"  {id_value}: {error}")
