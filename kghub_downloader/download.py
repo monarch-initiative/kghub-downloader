@@ -16,7 +16,7 @@ import ftplib
 import json
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Dict, List, Union
@@ -472,7 +472,8 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
                     if options.verbose:
                         tqdm.write(f"Failed to download {id_value}: {e}")
             
-            pbar.update(1)
+            if progress_enabled and pbar:
+                pbar.update(1)
     
     if failed_downloads and not options.fail_on_error:
         tqdm.write(f"Failed to download {len(failed_downloads)} files out of {len(ids)}")
