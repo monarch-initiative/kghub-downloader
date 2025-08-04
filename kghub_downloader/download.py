@@ -35,6 +35,8 @@ GOOGLE_DRIVE_PREFIX = "https://drive.google.com/uc?id="
 
 SNIPPET_SIZE = 1024 * 5
 CHUNK_SIZE = 1024
+DEFAULT_USER_AGENT = "Mozilla/5.0"
+DEFAULT_TIMEOUT = 10
 
 
 def log_result(fn):
@@ -283,6 +285,43 @@ def download_via_ftp(ftp_server, current_dir, local_dir, glob_pattern=None):
         print(f"Permission denied: {e}")
 
 
+def _extract_ids_from_list(data_list: List[Any]) -> List[str]:
+    """Helper to extract IDs from a list."""
+    return [str(item) for item in data_list]
+
+
+def _extract_ids_from_dict(data_dict: Dict[str, Any]) -> List[str]:
+    """Helper to extract IDs from a dict where values are lists."""
+    all_ids = []
+    for value in data_dict.values():
+        if isinstance(value, list):
+            all_ids.extend(_extract_ids_from_list(value))
+    return all_ids
+
+
+def _traverse_json_path(data: Union[Dict[str, Any], List[Any]], parts: List[str]) -> Any:
+    """Helper to traverse JSON data using a list of path parts."""
+    current = data
+    for part in parts:
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        elif isinstance(current, dict):
+            # If part not found, try to extract from nested dicts/lists
+            all_ids = []
+            for key, value in current.items():
+                if isinstance(value, list):
+                    all_ids.extend(_extract_ids_from_list(value))
+                elif isinstance(value, dict) and part in value:
+                    if isinstance(value[part], list):
+                        all_ids.extend(_extract_ids_from_list(value[part]))
+                    else:
+                        all_ids.append(str(value[part]))
+            return all_ids
+        else:
+            return []
+    return current
+
+
 def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) -> List[str]:
     """
     Extract IDs from JSON data using a simplified JSONPath-like notation.
@@ -312,46 +351,25 @@ def extract_ids_from_json(data: Union[Dict[str, Any], List[Any]], id_path: str) 
     """
     if not id_path:
         if isinstance(data, list):
-            return [str(item) for item in data]
+            return _extract_ids_from_list(data)
         elif isinstance(data, dict):
-            all_ids = []
-            for value in data.values():
-                if isinstance(value, list):
-                    all_ids.extend([str(item) for item in value])
-            return all_ids
+            return _extract_ids_from_dict(data)
         else:
             return [str(data)]
-    
+
     parts = id_path.split(".")
-    current = data
-    
-    for part in parts:
-        if isinstance(current, dict) and part in current:
-            current = current[part]
-        elif isinstance(current, dict):
-            all_ids = []
-            for key, value in current.items():
-                if isinstance(value, list):
-                    all_ids.extend([str(item) for item in value])
-                elif isinstance(value, dict) and part in value:
-                    if isinstance(value[part], list):
-                        all_ids.extend([str(item) for item in value[part]])
-                    else:
-                        all_ids.append(str(value[part]))
-            return all_ids
-        else:
-            return []
-    
+    current = _traverse_json_path(data, parts)
+
     if isinstance(current, list):
-        return [str(item) for item in current]
+        return _extract_ids_from_list(current)
     elif isinstance(current, dict):
-        all_ids = []
-        for value in current.values():
-            if isinstance(value, list):
-                all_ids.extend([str(item) for item in value])
-        return all_ids
-    else:
+        return _extract_ids_from_dict(current)
+    elif isinstance(current, str):
+        return [current]
+    elif current is not None:
         return [str(current)]
+    else:
+        return []
 
 
 @register_scheme("index")
@@ -400,7 +418,7 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
     if not item.url_pattern:
         raise ValueError("url_pattern is required for index-based downloads")
     
-    index_response = requests.get(item.index_url, timeout=10)
+    index_response = requests.get(item.index_url, timeout=getattr(options, "timeout", 10))
     index_response.raise_for_status()
     
     try:
@@ -429,7 +447,12 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
                 
                 local_file_path = outfile_path / local_filename
                 
-                response = requests.get(file_url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
+                response = requests.get(
+                    file_url,
+                    headers={"User-Agent": DEFAULT_USER_AGENT},
+                    stream=True,
+                    timeout=DEFAULT_TIMEOUT
+                )
                 response.raise_for_status()
                 
                 with open(local_file_path, "wb") as f:
