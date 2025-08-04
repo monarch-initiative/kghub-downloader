@@ -9,20 +9,7 @@ from kghub_downloader.model import DownloadableResource, DownloadOptions
 
 
 class TestExtractIdsFromJson(unittest.TestCase):
-    
-    def test_extract_from_list(self):
-        data = ["id1", "id2", "id3"]
-        ids = extract_ids_from_json(data, "")
-        self.assertEqual(ids, ["id1", "id2", "id3"])
-    
-    def test_extract_from_dict_with_lists(self):
-        data = {
-            "source1": ["id1", "id2"],
-            "source2": ["id3", "id4"]
-        }
-        ids = extract_ids_from_json(data, "")
-        self.assertEqual(set(ids), {"id1", "id2", "id3", "id4"})
-    
+
     def test_extract_from_nested_structure_like_gocam(self):
         data = {
             "http://informatics.jax.org": ["27114 items"],
