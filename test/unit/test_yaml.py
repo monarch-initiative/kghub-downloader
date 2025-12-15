@@ -53,3 +53,16 @@ class TestYAMLValidate(unittest.TestCase):
         self.assertEqual(resource.url, "index://test")
         self.assertEqual(resource.index_url, "https://example.com/index.json")
         self.assertEqual(resource.url_pattern, "https://example.com/files/{ID}.yaml")
+
+    def test_verify_ssl_default_true(self):
+        resource = DownloadableResource(
+            url="http://example.com/",
+        )
+        self.assertTrue(resource.verify_ssl)
+
+    def test_verify_ssl_can_be_disabled(self):
+        resource = DownloadableResource(
+            url="http://example.com/",
+            verify_ssl=False,
+        )
+        self.assertFalse(resource.verify_ssl)

@@ -209,7 +209,7 @@ def http(item: DownloadableResource, outfile_path: Path, options: DownloadOption
         gdown.download(url, output=str(outfile_path))
         return
 
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10)
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, stream=True, timeout=10, verify=item.verify_ssl)
     response.raise_for_status()
 
     size = int(response.headers.get("Content-Length", 0))
@@ -418,7 +418,7 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
     if not item.url_pattern:
         raise ValueError("url_pattern is required for index-based downloads")
     
-    index_response = requests.get(item.index_url, timeout=10)
+    index_response = requests.get(item.index_url, timeout=10, verify=item.verify_ssl)
     index_response.raise_for_status()
     
     try:
@@ -453,7 +453,8 @@ def index_based_download(item: DownloadableResource, outfile_path: Path, options
                     file_url,
                     headers={"User-Agent": DEFAULT_USER_AGENT},
                     stream=True,
-                    timeout=DEFAULT_TIMEOUT
+                    timeout=DEFAULT_TIMEOUT,
+                    verify=item.verify_ssl
                 )
                 response.raise_for_status()
                 

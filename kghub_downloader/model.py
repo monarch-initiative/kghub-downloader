@@ -46,6 +46,9 @@ class DownloadableResource(BaseModel):
     url_pattern: Optional[str] = None
     id_path: Optional[str] = None
 
+    # SSL verification (set to False for sources with problematic certificates)
+    verify_ssl: bool = True
+
     @property
     def path(self) -> pathlib.Path:
         """
