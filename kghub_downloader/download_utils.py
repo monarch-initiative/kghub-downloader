@@ -85,7 +85,7 @@ def download_from_yaml(
                 logging.info(f"Deleting cached version of {outfile_path}")
                 outfile_path.unlink()
             else:
-                logging.info("Using cached version of {outfile_path")
+                logging.info(f"Using cached version of {outfile_path}")
                 tqdm.write(f"SKIPPING: {outfile_path} already exists")
                 skipped_ct += 1
                 continue
