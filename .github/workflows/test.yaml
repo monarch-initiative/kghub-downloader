@@ -12,14 +12,11 @@ on:
 
 jobs:
   test:
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-        os: [ "ubuntu-latest", "windows-latest" ] 
+        os: [ "ubuntu-latest", "windows-latest" ]
     env:
       PYTHON: ${{ matrix.python-version }}
       OS: ubuntu
@@ -28,13 +25,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: projects/1032453560151/locations/global/workloadIdentityPools/monarch-github-actions/providers/monarch-github-wip
-          service_account: 'github-actions@monarch-initiative.iam.gserviceaccount.com'
 
       - name: Set up python
         id: setup-python
