@@ -3,7 +3,8 @@
 import os
 import pathlib
 import re
-from typing import Literal, Optional, Union
+from dataclasses import dataclass, field
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, FilePath
 
@@ -26,6 +27,20 @@ class DownloadOptions(BaseModel):
     progress: bool = False
     fail_on_error: bool = True
     verbose: bool = False
+
+
+@dataclass
+class DownloadReport:
+    """A report of what download_from_yaml did for each resource, keyed by outcome."""
+
+    downloaded: List[pathlib.Path] = field(default_factory=list)  # fetched this run (incl. ignore_cache re-fetches)
+    skipped: List[pathlib.Path] = field(default_factory=list)  # already present, served from cache
+    failed: List[pathlib.Path] = field(default_factory=list)  # attempted but errored
+
+    @property
+    def any_downloaded(self) -> bool:
+        """Whether any file was actually fetched this run."""
+        return bool(self.downloaded)
 
 
 class DownloadableResource(BaseModel):

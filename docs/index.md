@@ -72,7 +72,13 @@ Downloader can be used directly in Python or via command line
 ```python
 from kghub_downloader.download_utils import download_from_yaml
 
-download_from_yaml(yaml_file="download.yaml", output_dir="data")
+report = download_from_yaml(yaml_file="download.yaml", output_dir="data")
+
+# The returned DownloadReport lists the absolute path of each file that was
+# downloaded this run, skipped (already present, served from cache), or
+# failed (populated when fail_on_error is False)
+if report.any_downloaded:
+    print(f"Downloaded {len(report.downloaded)} files, skipped {len(report.skipped)}")
 ```
 
 #### Command Line
