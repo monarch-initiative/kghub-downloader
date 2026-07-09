@@ -7,13 +7,12 @@ import traceback
 from typing import List, Optional
 from urllib.parse import urlparse
 
-import typer
 import yaml
 from tqdm.auto import tqdm
 
 from kghub_downloader import schemes, upload
 from kghub_downloader.elasticsearch import download_from_elastic_search
-from kghub_downloader.model import DownloadableResource, DownloadOptions
+from kghub_downloader.model import DownloadableResource, DownloadOptions, DownloadReport
 
 
 def download_from_yaml(
@@ -22,7 +21,7 @@ def download_from_yaml(
     download_options: Optional[DownloadOptions] = None,
     tags: Optional[List] = None,
     mirror: Optional[str] = None,
-) -> None:
+) -> DownloadReport:
     """
     Download files listed in a download.yaml file.
 
@@ -32,6 +31,11 @@ def download_from_yaml(
         download_options: An object containing boolean flags that change download behavior
         tags: Limit to only downloads with this tag
         mirror: Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage
+
+    Returns:
+        A DownloadReport with the absolute paths of files that were downloaded this run,
+        skipped (already present, served from cache), or failed (only populated when
+        fail_on_error is False; otherwise the first error is raised).
 
     """
     start_time = time.time()
@@ -50,9 +54,7 @@ def download_from_yaml(
     if tags:
         resources = [item for item in resources if item.tag in tags]
 
-    successful_ct = 0
-    unsuccessful_ct = 0
-    skipped_ct = 0
+    report = DownloadReport()
 
     pbar = tqdm(
         resources,
@@ -85,15 +87,16 @@ def download_from_yaml(
                 logging.info(f"Deleting cached version of {outfile_path}")
                 outfile_path.unlink()
             else:
-                logging.info("Using cached version of {outfile_path")
+                logging.info(f"Using cached version of {outfile_path}")
                 tqdm.write(f"SKIPPING: {outfile_path} already exists")
-                skipped_ct += 1
+                report.skipped.append(outfile_path.resolve())
                 continue
 
         # Download file
         if item.api is not None:
             if item.api == "elasticsearch":
                 download_from_elastic_search(item, str(outfile_path))
+                report.downloaded.append(outfile_path.resolve())
             else:
                 raise RuntimeError(f"API {item.api} not supported")
             continue
@@ -106,9 +109,9 @@ def download_from_yaml(
 
         try:
             download_fn(item, outfile_path, download_options)
-            successful_ct += 1
+            report.downloaded.append(outfile_path.resolve())
         except BaseException as e:
-            unsuccessful_ct += 1
+            report.failed.append(outfile_path.resolve())
             if outfile_path.exists():
                 outfile_path.unlink()
 
@@ -134,21 +137,20 @@ def download_from_yaml(
 
     tqdm.write(
         f"\n\nDownload completed in {exec_time:.2f} seconds.\n\n"
-        f"    successful:   {successful_ct}\n"
-        f"    skipped:      {skipped_ct}\n"
-        f"    unsuccessful: {unsuccessful_ct}\n"
+        f"    successful:   {len(report.downloaded)}\n"
+        f"    skipped:      {len(report.skipped)}\n"
+        f"    unsuccessful: {len(report.failed)}\n"
     )
 
     show_verbose_message = all(
         (
             not download_options.fail_on_error,
             not download_options.verbose,
-            unsuccessful_ct > 0,
+            len(report.failed) > 0,
         )
     )
 
     if show_verbose_message:
         tqdm.write("Some downloads were unsuccessful. Run with --verbose to see errors\n")
 
-    if unsuccessful_ct > 0:
-        raise typer.Exit(code=1)
+    return report

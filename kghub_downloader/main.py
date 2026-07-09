@@ -5,7 +5,7 @@ from typing import Annotated, List, Optional
 import typer
 
 from kghub_downloader.download_utils import download_from_yaml
-from kghub_downloader.model import DownloadOptions
+from kghub_downloader.model import DownloadOptions, DownloadReport
 
 typer_app = typer.Typer()
 
@@ -48,7 +48,7 @@ def main(
         Optional[str],
         typer.Option(help="Optional remote storage URL to mirror download to. Supported buckets: Google Cloud Storage"),
     ] = None,
-):
+) -> DownloadReport:
     """Download a set of files defined in a YAML file."""
     options = DownloadOptions(
         snippet_only=snippet_only,
@@ -58,13 +58,18 @@ def main(
         verbose=verbose,
     )
 
-    download_from_yaml(
+    report = download_from_yaml(
         yaml_file=yaml_file,
         output_dir=output_dir,
         download_options=options,
         tags=tags,
         mirror=mirror,
     )
+
+    if report.failed:
+        raise typer.Exit(code=1)
+
+    return report
 
 
 if __name__ == "__main__":
